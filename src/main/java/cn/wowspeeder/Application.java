@@ -25,9 +25,11 @@ public class Application {
 
         logger.info("config path:{}", configPath);
         if (commandLine.hasOption("s")) {
-            SWServer.getInstance().start(configPath);
+//            SWServer.getInstance().start(configPath);
+            QuicServer.getInstance().start(configPath);
         } else if (commandLine.hasOption("c")) {
-            SWLocal.getInstance().start(configPath);
+//            SWLocal.getInstance().start(configPath);
+            QuicLocal.getInstance().start(configPath);
         } else {
             logger.error("not found run type");
         }

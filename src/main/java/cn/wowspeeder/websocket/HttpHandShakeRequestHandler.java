@@ -50,7 +50,7 @@ public class HttpHandShakeRequestHandler extends ChannelInboundHandlerAdapter {
                     }
 
                     String password = ctx.channel().attr(SWCommon.PASSWORD).get();
-                    Base64Encrypt base64 = Base64Encrypt.getInstance(password);
+                    Base64Encrypt base64 = Base64Encrypt.getInstance();
 
                     String targetHostAndPort = base64.getDesString(targetAddr);
                     //eg: targetHostAndPort = www.baidu.com:443

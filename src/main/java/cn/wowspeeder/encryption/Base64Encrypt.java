@@ -9,17 +9,20 @@ import java.security.Key;
 import java.security.SecureRandom;
 
 public class Base64Encrypt {
-	Key key;
+	private Key key;
 
+	private static Base64Encrypt base64Encrypt = new Base64Encrypt();
 
-	public static Base64Encrypt  base64Encrypt = new Base64Encrypt();
+	private Base64Encrypt(){}
 
-	public static Base64Encrypt getInstance(String key) throws Exception {
-		base64Encrypt.setKey(key);
+	public static Base64Encrypt getInstance() {
 		return base64Encrypt;
 	}
 
-	private Base64Encrypt(){}
+	public void init(String password) throws Exception {
+		setKey(password);
+	}
+
 	/**
 	 * 根据参数生成KEY
 	 *
