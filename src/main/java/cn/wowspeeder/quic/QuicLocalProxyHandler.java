@@ -72,7 +72,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
         logger.debug("channel id {},readableBytes:{}", clientChannel.id().toString(), msg.readableBytes());
 //        if (msg.readableBytes() == 0) return;
         proxy(clientCtx, msg);
-        logger.info(Thread.currentThread().getName() + "==time: "+(System.currentTimeMillis() - startime)+ ", readableBytes: " + ((ByteBuf) msg).readableBytes());
+//        logger.info(Thread.currentThread().getName() + "==time: "+(System.currentTimeMillis() - startime)+ ", readableBytes: " + ((ByteBuf) msg).readableBytes());
     }
 
     private void proxy(ChannelHandlerContext clientCtx, ByteBuf msg) throws Exception {
@@ -90,11 +90,11 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
             ChannelHandler codec = new QuicClientCodecBuilder()
                     .sslEngineProvider(q -> SslContext.newEngine(q.alloc(), ssServer.getHostString(), ssServer.getPort()))
                     .maxIdleTimeout(1000 * 60, TimeUnit.MILLISECONDS)
-                    .initialMaxData( 1000000 * 2) //20M
+                    .initialMaxData( 1024 * 1024 * 20) //20M
                     // As we don't want to support remote initiated streams just setup the limit for local initiated
                     // streams in this example.
-                    .initialMaxStreamDataBidirectionalLocal( 1000000 * 2) //2M
-                    .initialMaxStreamDataBidirectionalRemote( 1000000 * 2) //2M
+                    .initialMaxStreamDataBidirectionalLocal( 1024 * 1024 * 20) //2M
+                    .initialMaxStreamDataBidirectionalRemote( 1024 * 1024 * 20) //2M
                     .maxAckDelay(10,TimeUnit.MILLISECONDS)
                     .build();
             System.err.println("====codec is ok channel id " + clientChannel.id() + " " + (System.currentTimeMillis() - starttime));
@@ -102,6 +102,8 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
 
             Channel channel = proxyClient.group(workerGroup)
                     .channel(NioDatagramChannel.class)
+                    .option(ChannelOption.SO_RCVBUF, 20 * 1024 * 1024)// 接收缓冲区为2M
+                    .option(ChannelOption.SO_SNDBUF, 20 * 1024 * 1024)// 发送缓冲区为2M
                     .handler(codec)
                     .bind(0).sync().channel();
 
@@ -209,7 +211,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
 //                        byteBuf.release();
 //                        clientChannel.writeAndFlush(((ByteBuf) msg).retain());
                         clientChannel.writeAndFlush(((ByteBuf) msg));
-                        logger.info(Thread.currentThread().getName() + ", readableBytes: " + ((ByteBuf) msg).readableBytes());
+//                        logger.info(Thread.currentThread().getName() + ", readableBytes: " + ((ByteBuf) msg).readableBytes());
 
                     }
 
@@ -217,7 +219,8 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
                         if (evt == ChannelInputShutdownReadComplete.INSTANCE) {
                             // Close the connection once the remote peer did send the FIN for this stream.
-                            ((QuicChannel) ctx.channel().parent()).close();
+//                            ((QuicChannel) ctx.channel().parent()).close();
+                            proxyChannelClose();
                         }
                     }
                 });
@@ -237,6 +240,9 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                 remoteChannel.shutdownOutput();
                 remoteChannel.close();
                 remoteChannel = null;
+            }
+            if(workerGroup != null){
+                workerGroup.shutdownGracefully();
             }
             if (clientChannel != null) {
                 clientChannel.close();

@@ -15,6 +15,6 @@ public class QuicServerCheckerSend extends ChannelOutboundHandlerAdapter {
         long starttime = System.currentTimeMillis();
         super.write(ctx,msg,promise);
 //        ctx.writeAndFlush(msg);
-        logger.info(Thread.currentThread().getName() + "==time: "+ (System.currentTimeMillis() - starttime)+ ", readableBytes: " + ((ByteBuf) msg).readableBytes() + " isWtitable: "+ctx.channel().isWritable());
+//        logger.info(Thread.currentThread().getName() + "==time: "+ (System.currentTimeMillis() - starttime)+ ", readableBytes: " + ((ByteBuf) msg).readableBytes() + " isWtitable: "+ctx.channel().isWritable());
     }
 }

@@ -67,9 +67,9 @@ public class QuicServer {
         ChannelHandler codec = new QuicServerCodecBuilder().sslContext(sslContext)
                 .maxIdleTimeout(1000 * 60, TimeUnit.MILLISECONDS)
                 // Configure some limits for the maximal number of streams (and the data) that we want to handle.
-                .initialMaxData(1000000 * 2) //20M
-                .initialMaxStreamDataBidirectionalLocal(1000000 * 2)  //2M
-                .initialMaxStreamDataBidirectionalRemote(1000000 * 2) //2M
+                .initialMaxData(1024 * 1024 * 20) //20M
+                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 20)  //2M
+                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 20) //2M
                 .initialMaxStreamsBidirectional(1)
                 .initialMaxStreamsUnidirectional(1)
                 .maxAckDelay(10,TimeUnit.MILLISECONDS)
@@ -119,6 +119,8 @@ public class QuicServer {
             Bootstrap bs = new Bootstrap();
             Channel channel = bs.group(bossGroup)
                     .channel(NioDatagramChannel.class)
+                    .option(ChannelOption.SO_RCVBUF, 20 * 1024 * 1024)// 接收缓冲区为2M
+                    .option(ChannelOption.SO_SNDBUF, 20 * 1024 * 1024)// 发送缓冲区为2M
                     .handler(codec)
                     .bind(server, port).sync().channel();
             logger.info("listen at {}:{}", server, port);

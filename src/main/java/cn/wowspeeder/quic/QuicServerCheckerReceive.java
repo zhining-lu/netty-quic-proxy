@@ -29,7 +29,7 @@ public class QuicServerCheckerReceive extends SimpleChannelInboundHandler<Object
 //        ctx.channel().pipeline().remove(this);
         long starttime = System.currentTimeMillis();
         ctx.fireChannelRead(msg);
-        logger.info(Thread.currentThread().getName() +"===time: "+ (System.currentTimeMillis()-starttime) + ", readableBytes: " + ((ByteBuf) msg).readableBytes());
+//        logger.info(Thread.currentThread().getName() +"===time: "+ (System.currentTimeMillis()-starttime) + ", readableBytes: " + ((ByteBuf) msg).readableBytes());
     }
 
     @Override
