@@ -34,8 +34,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
         if (this.quicStreamChannel == null) {
             this.quicStreamChannel = (QuicStreamChannel)ctx.channel();
         }
-
-        logger.debug("channel id {},readableBytes:{}", quicStreamChannel.id().toString(), msg.readableBytes());
+//        logger.debug("channel id {},readableBytes:{}", quicStreamChannel.id().toString(), msg.readableBytes());
         proxy(ctx, msg);
     }
 
@@ -43,7 +42,6 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
 
         logger.debug("channel id {},pc is null {},{}", quicStreamChannel.id().toString(), (remoteChannel == null), msg.readableBytes());
         if (remoteChannel == null && proxyClient == null) {
-            long startime = System.currentTimeMillis();
             proxyClient = new Bootstrap();//
             workerGroup = new NioEventLoopGroup();
             InetSocketAddress clientRecipient = quicStreamChannel.attr(QuicCommon.REMOTE_DES).get();
@@ -76,6 +74,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                 @Override
                                                 public void channelActive(ChannelHandlerContext ctx) throws Exception {
 //                                                    logger.debug("channelActive {}",msg.readableBytes());
+                                                    super.channelActive(ctx);
                                                 }
 
                                                 @Override
@@ -99,7 +98,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                         .addListener((ChannelFutureListener) future -> {
                             try {
                                 if (future.isSuccess()) {
-                                    logger.debug("channel id {}, {}<->{}<->{} connect  {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), future.channel().localAddress().toString(), clientRecipient.toString(), future.isSuccess());
+                                    logger.info("channel id {}, {}<->{}<->{} connect  {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), future.channel().localAddress().toString(), clientRecipient.toString(), future.isSuccess());
                                     remoteChannel = future.channel();
                                     if (clientBuffs != null) {
                                         ListIterator<ByteBuf> bufsIterator = clientBuffs.listIterator();
@@ -121,8 +120,6 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                 proxyChannelClose();
                 return;
             }
-            System.out.println(Thread.currentThread().getName() + " proxy time: " + (System.currentTimeMillis() - startime));
-
         }
 
         if (remoteChannel == null) {

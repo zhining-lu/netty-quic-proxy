@@ -25,9 +25,8 @@ public class QuicServerCheckerReceive extends SimpleChannelInboundHandler<Object
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf byteBuf = (ByteBuf) msg;
-//        System.err.println("==QuicServerCheckerReceive===" + byteBuf.toString(CharsetUtil.UTF_8));
 //        ctx.channel().pipeline().remove(this);
-        long starttime = System.currentTimeMillis();
+//        long starttime = System.currentTimeMillis();
         ctx.fireChannelRead(msg);
 //        logger.info(Thread.currentThread().getName() +"===time: "+ (System.currentTimeMillis()-starttime) + ", readableBytes: " + ((ByteBuf) msg).readableBytes());
     }

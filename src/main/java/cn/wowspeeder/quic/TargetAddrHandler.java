@@ -22,14 +22,9 @@ public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf byteBuf = (ByteBuf) msg;
-        System.err.println("TargetAddrHandler firstMsg " + firstMsg + "==" + byteBuf.toString(CharsetUtil.UTF_8));
-
-        // The first message is targetAddr
+        // The first message of channel is targetAddr
         if (firstMsg) {
-            long starttime = System.currentTimeMillis();
-
             String URI = byteBuf.toString(CharsetUtil.UTF_8);
-
             // eg: URI = GET /BASE64ENCODE
             switch (URI) {
                 case "GET /":
@@ -50,12 +45,11 @@ public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
                         ;
                         break;
                     }
-                    System.err.println("===switch-======");
+
                     String password = ctx.channel().attr(SWCommon.PASSWORD).get();
                     Base64Encrypt base64 = Base64Encrypt.getInstance();
                     //remove "GET /"
                     String targetHostAndPort = base64.getDesString(URI.substring(5));
-                    System.err.println("===targetHostAndPort-======" + targetHostAndPort);
                     //eg: targetHostAndPort = www.baidu.com:443
                     Pattern p = Pattern.compile("^\\s*(.*?):(\\d+)\\s*$");
                     Matcher m = p.matcher(targetHostAndPort);
@@ -63,7 +57,6 @@ public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
                         String host = m.group(1);
                         int port = Integer.parseInt(m.group(2));
                         ctx.channel().attr(QuicCommon.REMOTE_DES).set(InetSocketAddress.createUnresolved(host, port));
-                        System.err.println("==========" + host +":" + port);
                     } else {
                         logger.error("TargetAddr format is not rigth: {}", targetHostAndPort);
                         throw new UnsupportedOperationException("TargetAddr format is not rigth: " + targetHostAndPort);
@@ -74,13 +67,11 @@ public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
             byteBuf = Unpooled.buffer();
             ctx.fireChannelRead(byteBuf);
             firstMsg = false;
-            System.err.println(Thread.currentThread().getName() + "targethandler time: "+(System.currentTimeMillis() - starttime));
         }
 
         //remove lineDecoder and this handler
         ctx.pipeline().remove(this);
         ctx.pipeline().remove("lineDecoder");
-
 
     }
 }

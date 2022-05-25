@@ -84,14 +84,13 @@ public class QuicServer {
                     public void channelActive(ChannelHandlerContext ctx) {
                         QuicChannel channel = (QuicChannel) ctx.channel();
                         // Create streams etc..
-                        logger.info("Active QuicChannel, Id: {}", channel.id());
+                        logger.info("QuicChannel {} is active", channel);
                     }
 
                     public void channelInactive(ChannelHandlerContext ctx) {
-                        logger.info("Connection(QuicChannel) closed channel id: {}", ctx.channel().id());
                         ((QuicChannel) ctx.channel()).collectStats().addListener(f -> {
                             if (f.isSuccess()) {
-                                logger.info("Connection(QuicChannel) closed: {}", f.getNow());
+                                logger.info("QuicChannel closed: {}", f.getNow());
                             }
                         });
                     }
@@ -119,8 +118,8 @@ public class QuicServer {
             Bootstrap bs = new Bootstrap();
             Channel channel = bs.group(bossGroup)
                     .channel(NioDatagramChannel.class)
-                    .option(ChannelOption.SO_RCVBUF, 20 * 1024 * 1024)// 接收缓冲区为2M
-                    .option(ChannelOption.SO_SNDBUF, 20 * 1024 * 1024)// 发送缓冲区为2M
+                    .option(ChannelOption.SO_RCVBUF, 20 * 1024 * 1024)// 接收缓冲区为20M
+                    .option(ChannelOption.SO_SNDBUF, 20 * 1024 * 1024)// 发送缓冲区为20M
                     .handler(codec)
                     .bind(server, port).sync().channel();
             logger.info("listen at {}:{}", server, port);

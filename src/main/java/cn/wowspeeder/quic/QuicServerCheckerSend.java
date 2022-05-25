@@ -12,9 +12,8 @@ public class QuicServerCheckerSend extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        long starttime = System.currentTimeMillis();
+//        long starttime = System.currentTimeMillis();
         super.write(ctx,msg,promise);
-//        ctx.writeAndFlush(msg);
 //        logger.info(Thread.currentThread().getName() + "==time: "+ (System.currentTimeMillis() - starttime)+ ", readableBytes: " + ((ByteBuf) msg).readableBytes() + " isWtitable: "+ctx.channel().isWritable());
     }
 }
