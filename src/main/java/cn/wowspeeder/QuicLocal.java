@@ -38,7 +38,8 @@ public class QuicLocal {
 
     private static final EventLoopGroup bossGroup = new NioEventLoopGroup();
     private static final EventLoopGroup workerGroup = new NioEventLoopGroup();
-    private static final EventExecutorGroup eventGroup = new DefaultEventExecutorGroup(16);
+    private static final EventLoopGroup workerGroup2 = new NioEventLoopGroup();
+    private static final EventExecutorGroup eventGroup = new DefaultEventExecutorGroup(24);
 
     private static QuicLocal QuicLocal = new QuicLocal();
 
@@ -93,7 +94,7 @@ public class QuicLocal {
 //                                .addLast(new LoggingHandler(LogLevel.INFO))
                                 .addLast(new SocksPortUnificationServerHandler())
                                 .addLast(SocksServerHandler.INSTANCE)
-                                .addLast(eventGroup, new QuicLocalProxyHandler(eventGroup, sslContext, server, port, password));
+                                .addLast(eventGroup, new QuicLocalProxyHandler( workerGroup2, sslContext, server, port, password));
                     }
                 });
 

@@ -39,7 +39,7 @@ public class QuicServer {
     private static InternalLogger logger = InternalLoggerFactory.getInstance(QuicServer.class);
 
     private static EventLoopGroup bossGroup = new NioEventLoopGroup();
-
+    private static final EventLoopGroup workerGroup2 = new NioEventLoopGroup();
     private static QuicServer QuicServer = new QuicServer();
 
     public static QuicServer getInstance() {
@@ -72,7 +72,7 @@ public class QuicServer {
                 .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 20) //2M
                 .initialMaxStreamsBidirectional(1)
                 .initialMaxStreamsUnidirectional(1)
-                .maxAckDelay(10,TimeUnit.MILLISECONDS)
+//                .maxAckDelay(10,TimeUnit.MILLISECONDS)
 
                 // Setup a token handler. In a production system you would want to implement and provide your custom
                 // one.
@@ -110,7 +110,7 @@ public class QuicServer {
                                 .addLast(new QuicServerCheckerSend())
                                 .addLast("lineDecoder", new LineBasedFrameDecoder(1024))
                                 .addLast(new TargetAddrHandler())
-                                .addLast(new QuicServerProxyHandler());
+                                .addLast(new QuicServerProxyHandler(workerGroup2));
                     }
                 }).build();
 

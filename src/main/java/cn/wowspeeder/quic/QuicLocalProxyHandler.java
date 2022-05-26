@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> {
     private static InternalLogger logger = InternalLoggerFactory.getInstance(QuicLocalProxyHandler.class);
 
-    private NioEventLoopGroup workerGroup;
+    private EventLoopGroup workerGroup;
     private EventExecutorGroup eventGroup;
     private InetSocketAddress ssServer;
     private Socks5CommandRequest targetAddr;
@@ -56,11 +56,11 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
     private List<ByteBuf> clientBuffs;
     private QuicSslContext SslContext;
 
-    public QuicLocalProxyHandler(EventExecutorGroup eventGroup, QuicSslContext SslContext, String server, Integer port, String password) {
+    public QuicLocalProxyHandler(EventLoopGroup workerGroup, QuicSslContext SslContext, String server, Integer port, String password) {
         this.password = password;
-        this.eventGroup = eventGroup;
         this.SslContext = SslContext;
         this.ssServer = new InetSocketAddress(server, port);
+        this.workerGroup = workerGroup;
     }
 
     @Override
@@ -84,7 +84,8 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
             String URI = "GET /" + targetAddrBase64 + "\r\n";
             logger.info("URI: GET /" + targetAddrBase64 + "  " + targetAddr.dstAddr() + ":" + targetAddr.dstPort());
 
-            workerGroup = new NioEventLoopGroup(1);
+            long startTime0 = System.currentTimeMillis();
+//            workerGroup = new NioEventLoopGroup(1);
             ChannelHandler codec = new QuicClientCodecBuilder()
                     .sslEngineProvider(q -> SslContext.newEngine(q.alloc(), ssServer.getHostString(), ssServer.getPort()))
                     .maxIdleTimeout(1000 * 60, TimeUnit.MILLISECONDS)
@@ -93,8 +94,9 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     // streams in this example.
                     .initialMaxStreamDataBidirectionalLocal( 1024 * 1024 * 20) //2M
                     .initialMaxStreamDataBidirectionalRemote( 1024 * 1024 * 20) //2M
-                    .maxAckDelay(10,TimeUnit.MILLISECONDS)
+//                    .maxAckDelay(10,TimeUnit.MILLISECONDS)
                     .build();
+            logger.info("codec "+ (System.currentTimeMillis() - startTime0));
             proxyClient = new Bootstrap();//
 
             Channel channel = proxyClient.group(workerGroup)
@@ -131,9 +133,9 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                                 }
                                 clientBuffs = null;
                             }
-                            logger.info("channel {}, connect {}", remoteStreamChannel, f.isSuccess());
+                            logger.info("channel {}, connect {}, time: {}", remoteStreamChannel, f.isSuccess(), System.currentTimeMillis()-startTime0);
                         } else {
-                            logger.info("channel {}, connect {}, cause {}", remoteStreamChannel, f.isSuccess(), f.cause());
+                            logger.info("channel {}, connect {}, cause {}, time: {}", remoteStreamChannel, f.isSuccess(), f.cause(), System.currentTimeMillis()-startTime0);
                             proxyChannelClose();
                         }
                     });
@@ -210,9 +212,9 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
             if(quicChannel != null){
                 quicChannel.close();
             }
-            if(workerGroup != null){
+            /*if(workerGroup != null){
                 workerGroup.shutdownGracefully();
-            }
+            }*/
             if (clientChannel != null) {
                 clientChannel.close();
                 clientChannel = null;

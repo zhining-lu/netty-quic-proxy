@@ -29,6 +29,10 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
     private List<ByteBuf> clientBuffs;
     private EventLoopGroup workerGroup;
 
+    public QuicServerProxyHandler(EventLoopGroup workerGroup){
+        this.workerGroup = workerGroup;
+    }
+
     @Override
     public void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) {
         if (this.quicStreamChannel == null) {
@@ -43,7 +47,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
         logger.debug("channel id {},pc is null {},{}", quicStreamChannel.id().toString(), (remoteChannel == null), msg.readableBytes());
         if (remoteChannel == null && proxyClient == null) {
             proxyClient = new Bootstrap();//
-            workerGroup = new NioEventLoopGroup();
+//            workerGroup = new NioEventLoopGroup();
             InetSocketAddress clientRecipient = quicStreamChannel.attr(QuicCommon.REMOTE_DES).get();
 
             proxyClient.group(workerGroup).channel(NioSocketChannel.class)
@@ -169,9 +173,9 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                 quicStreamChannel = null;
             }
 
-            if(workerGroup != null){
+            /*if(workerGroup != null){
                 workerGroup.shutdownGracefully();
-            }
+            }*/
 
         } catch (Exception e) {
 //            logger.error("close channel error", e);
