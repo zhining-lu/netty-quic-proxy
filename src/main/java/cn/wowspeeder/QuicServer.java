@@ -65,7 +65,7 @@ public class QuicServer {
         QuicSslContext sslContext = getSslContext();
 
         ChannelHandler codec = new QuicServerCodecBuilder().sslContext(sslContext)
-                .maxIdleTimeout(1000 * 60, TimeUnit.MILLISECONDS)
+                .maxIdleTimeout(1000 * 60 * 10, TimeUnit.MILLISECONDS)
                 // Configure some limits for the maximal number of streams (and the data) that we want to handle.
                 .initialMaxData(1024 * 1024 * 20) //20M
                 .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 20)  //2M
@@ -76,8 +76,8 @@ public class QuicServer {
 
                 // Setup a token handler. In a production system you would want to implement and provide your custom
                 // one.
-//                .tokenHandler(NoValidationQuicTokenHandler.INSTANCE)
-                .tokenHandler(InsecureQuicTokenHandler.INSTANCE)
+                .tokenHandler(NoValidationQuicTokenHandler.INSTANCE)
+//                .tokenHandler(InsecureQuicTokenHandler.INSTANCE)
                 // ChannelHandler that is added into QuicChannel pipeline.
                 .handler(new ChannelInboundHandlerAdapter() {
                     @Override

@@ -21,16 +21,26 @@ public final class QuicClientZeroRTTExample {
     private  String server;
     private  int port;
 
-
     public QuicClientZeroRTTExample(String server, int port) {
         this.server = server;
         this.port = port;
     }
 
-    public void send(QuicSslContext SslContext) throws Exception {
+    public static void main(String[] args) throws Exception {
+        QuicClientZeroRTTExample example = new QuicClientZeroRTTExample("192.168.1.131", 1888);
+        example.send();
+    }
+
+    public void send() throws Exception {
+
+        QuicSslContext SslContext = QuicSslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).
+                applicationProtocols("http/0.9")
+                .earlyData(true)
+                .build();
+
         newChannelAndSendData(SslContext, null);
-//        newChannelAndSendData(context, null);
-        newChannelAndSendData(SslContext, new EarlyDataSendCallback() {
+        newChannelAndSendData(SslContext, null);
+        /*newChannelAndSendData(SslContext, new EarlyDataSendCallback() {
             @Override
             public void send(QuicChannel quicChannel) {
                 createStream(quicChannel).addListener(f -> {
@@ -42,13 +52,13 @@ public final class QuicClientZeroRTTExample {
                     }
                 });
             }
-        });
+        });*/
     }
 
     void newChannelAndSendData(QuicSslContext context, EarlyDataSendCallback earlyDataSendCallback) throws Exception {
         NioEventLoopGroup group = new NioEventLoopGroup(1);
         try {
-
+            long startTime = System.currentTimeMillis();
             ChannelHandler codec = new QuicClientCodecBuilder()
                     .sslEngineProvider(q -> context.newEngine(q.alloc(), this.server, this.port))
                     .maxIdleTimeout(1000 * 60, TimeUnit.MILLISECONDS)
@@ -82,7 +92,7 @@ public final class QuicClientZeroRTTExample {
             QuicChannel quicChannel = quicChannelBootstrap
                     .connect()
                     .get();
-
+            System.err.println("===connected ====time: " + (System.currentTimeMillis() - startTime));
             QuicStreamChannel streamChannel = createStream(quicChannel).sync().getNow();
             // Write the data and send the FIN. After this its not possible anymore to write any more data.
             System.err.println("===send other====");

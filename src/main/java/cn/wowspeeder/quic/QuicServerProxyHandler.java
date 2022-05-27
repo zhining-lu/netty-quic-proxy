@@ -29,7 +29,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
     private List<ByteBuf> clientBuffs;
     private EventLoopGroup workerGroup;
 
-    public QuicServerProxyHandler(EventLoopGroup workerGroup){
+    public  QuicServerProxyHandler(EventLoopGroup workerGroup){
         this.workerGroup = workerGroup;
     }
 
@@ -70,9 +70,14 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                 }
                                             })
                                             .addLast("tcpProxy", new SimpleChannelInboundHandler<ByteBuf>() {
+                                                boolean f = true;
                                                 @Override
                                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
                                                     quicStreamChannel.writeAndFlush(msg.retain());
+                                                    if(f){
+                                                        logger.info("channel: {}, readableBytes： {}, time: {}", ctx.channel().id(), msg.readableBytes(), System.currentTimeMillis() );
+                                                        f = false;
+                                                    }
                                                 }
 
                                                 @Override
@@ -97,12 +102,13 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                             }
                     );
             try {
+                long startTime = System.currentTimeMillis();
                 proxyClient
                         .connect(clientRecipient)
                         .addListener((ChannelFutureListener) future -> {
                             try {
                                 if (future.isSuccess()) {
-                                    logger.info("channel id {}, {}<->{}<->{} connect  {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), future.channel().localAddress().toString(), clientRecipient.toString(), future.isSuccess());
+                                    logger.info("channel id {}, {}<->{}<->{} connect {}, time: {} {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), future.channel().localAddress().toString(), clientRecipient.toString(), future.isSuccess(), System.currentTimeMillis() - startTime, System.currentTimeMillis());
                                     remoteChannel = future.channel();
                                     if (clientBuffs != null) {
                                         ListIterator<ByteBuf> bufsIterator = clientBuffs.listIterator();
@@ -112,7 +118,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                         clientBuffs = null;
                                     }
                                 } else {
-                                    logger.error("channel id {}, {}<->{} connect {},cause {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), clientRecipient.toString(), future.isSuccess(), future.cause());
+                                    logger.error("channel id {}, {}<->{} connect {},cause {}, time: {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), clientRecipient.toString(), future.isSuccess(), future.cause(), System.currentTimeMillis() - startTime);
                                     proxyChannelClose();
                                 }
                             } catch (Exception e) {
