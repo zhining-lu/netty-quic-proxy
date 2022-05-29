@@ -1,17 +1,15 @@
 package cn.wowspeeder.quic;
 
-import cn.wowspeeder.sw.SWCommon;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.util.CharsetUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
-import java.net.InetSocketAddress;
-
 public class QuicServerCheckerReceive extends SimpleChannelInboundHandler<Object> {
     private static InternalLogger logger = InternalLoggerFactory.getInstance(QuicServerCheckerReceive.class);
+    private long startTime = System.currentTimeMillis();
+    private int i = 0;
 
     public QuicServerCheckerReceive() {
         super(false);
@@ -26,9 +24,12 @@ public class QuicServerCheckerReceive extends SimpleChannelInboundHandler<Object
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf byteBuf = (ByteBuf) msg;
 //        ctx.channel().pipeline().remove(this);
-//        long starttime = System.currentTimeMillis();
-        ctx.fireChannelRead(msg);
-//        logger.info(Thread.currentThread().getName() +"===time: "+ (System.currentTimeMillis()-starttime) + ", readableBytes: " + ((ByteBuf) msg).readableBytes());
+        if(i < 3){
+            logger.info("Channel: {}, Receive {}, readableBytes： {}, time: {} {}", ctx.channel().id(), i,byteBuf.readableBytes(),System.currentTimeMillis()-startTime, System.currentTimeMillis() );
+            startTime = System.currentTimeMillis();
+            i++;
+        }
+        ctx.fireChannelRead(byteBuf);
     }
 
     @Override

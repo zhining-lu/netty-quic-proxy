@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 public class QuicLocal {
     private static InternalLogger logger = InternalLoggerFactory.getInstance(QuicLocal.class);
 
-
     private static final EventLoopGroup bossGroup = new NioEventLoopGroup();
     private static final EventLoopGroup workerGroup = new NioEventLoopGroup();
     private static final EventLoopGroup workerGroup2 = new NioEventLoopGroup();

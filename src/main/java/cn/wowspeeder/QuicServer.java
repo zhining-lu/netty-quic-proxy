@@ -27,6 +27,8 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.incubator.codec.quic.*;
 import io.netty.util.CharsetUtil;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -40,6 +42,8 @@ public class QuicServer {
 
     private static EventLoopGroup bossGroup = new NioEventLoopGroup();
     private static final EventLoopGroup workerGroup2 = new NioEventLoopGroup();
+    private static final EventExecutorGroup eventGroup = new DefaultEventExecutorGroup(24);
+
     private static QuicServer QuicServer = new QuicServer();
 
     public static QuicServer getInstance() {
@@ -72,7 +76,7 @@ public class QuicServer {
                 .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 20) //2M
                 .initialMaxStreamsBidirectional(1)
                 .initialMaxStreamsUnidirectional(1)
-//                .maxAckDelay(10,TimeUnit.MILLISECONDS)
+                .maxAckDelay(10,TimeUnit.MILLISECONDS)
 
                 // Setup a token handler. In a production system you would want to implement and provide your custom
                 // one.

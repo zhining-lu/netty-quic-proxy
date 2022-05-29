@@ -1,7 +1,8 @@
 package cn.wowspeeder.encryption;
 
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
+import java.util.Base64;
+import java.util.Base64.Encoder;
+import java.util.Base64.Decoder;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -51,11 +52,11 @@ public class Base64Encrypt {
 		byte[] byteMi = null;
 		byte[] byteMing = null;
 		String strMi = "";
-		BASE64Encoder base64en = new BASE64Encoder();
+		Encoder base64en = Base64.getEncoder();
 		try {
 			byteMing = strMing.getBytes("UTF-8");
 			byteMi = this.getEncCode(byteMing);
-			strMi = base64en.encode(byteMi);
+			strMi = new String(base64en.encode(byteMi), "UTF-8");
 		} catch (Exception e) {
 			throw e;
 		} finally {
@@ -73,12 +74,12 @@ public class Base64Encrypt {
 	 * @return
 	 */
 	public String getDesString(String strMi) throws Exception {
-		BASE64Decoder base64De = new BASE64Decoder();
+		Decoder base64De = Base64.getDecoder();
 		byte[] byteMing = null;
 		byte[] byteMi = null;
 		String strMing = "";
 		try {
-			byteMi = base64De.decodeBuffer(strMi);
+			byteMi = base64De.decode(strMi);
 			byteMing = this.getDesCode(byteMi);
 			strMing = new String(byteMing, "UTF-8");
 		} catch (Exception e) {

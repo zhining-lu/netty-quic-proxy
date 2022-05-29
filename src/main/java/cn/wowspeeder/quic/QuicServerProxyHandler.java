@@ -4,7 +4,6 @@ import cn.wowspeeder.sw.SWCommon;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -73,11 +72,11 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                 boolean f = true;
                                                 @Override
                                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-                                                    quicStreamChannel.writeAndFlush(msg.retain());
                                                     if(f){
-                                                        logger.info("channel: {}, readableBytes： {}, time: {}", ctx.channel().id(), msg.readableBytes(), System.currentTimeMillis() );
+                                                        logger.info("channel: {}, read remote, readableBytes： {}, time: {}", ctx.channel().id(), msg.readableBytes(), System.currentTimeMillis() );
                                                         f = false;
                                                     }
+                                                    quicStreamChannel.writeAndFlush(msg.retain());
                                                 }
 
                                                 @Override
@@ -110,10 +109,15 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                 if (future.isSuccess()) {
                                     logger.info("channel id {}, {}<->{}<->{} connect {}, time: {} {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), future.channel().localAddress().toString(), clientRecipient.toString(), future.isSuccess(), System.currentTimeMillis() - startTime, System.currentTimeMillis());
                                     remoteChannel = future.channel();
+                                    logger.info("clientBuffs: {}, length: {}", clientBuffs, clientBuffs.size());
                                     if (clientBuffs != null) {
                                         ListIterator<ByteBuf> bufsIterator = clientBuffs.listIterator();
                                         while (bufsIterator.hasNext()) {
-                                            remoteChannel.writeAndFlush(bufsIterator.next());
+                                            ByteBuf byteBuf = bufsIterator.next();
+                                            if(byteBuf.readableBytes() > 0){
+                                                logger.info("channel: {}, write(clientBuffs)：{}, time: {}", ctx.channel().id(), byteBuf.readableBytes(), System.currentTimeMillis() );
+                                                remoteChannel.writeAndFlush(byteBuf);
+                                            }
                                         }
                                         clientBuffs = null;
                                     }
@@ -140,6 +144,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
 //            logger.debug("channel id {},add to client buff list", clientChannel.id().toString());
         } else {
             if (clientBuffs == null) {
+//                logger.info("channel:{}, write: {}, time: {}",remoteChannel.id() ,msg.readableBytes(), System.currentTimeMillis());
                 remoteChannel.writeAndFlush(msg.retain());
             } else {
                 clientBuffs.add(msg.retain());
@@ -165,18 +170,20 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
     private void proxyChannelClose() {
 //        logger.info("proxyChannelClose");
         try {
-            if (clientBuffs != null) {
-                clientBuffs.forEach(ReferenceCountUtil::release);
-                clientBuffs = null;
-            }
-            if (remoteChannel != null) {
-                remoteChannel.close();
-                remoteChannel = null;
-            }
-            if (quicStreamChannel != null) {
-                quicStreamChannel.shutdownOutput();
-                quicStreamChannel.close();
-                quicStreamChannel = null;
+            synchronized (this){
+                if (clientBuffs != null) {
+                    clientBuffs.forEach(ReferenceCountUtil::release);
+                    clientBuffs = null;
+                }
+                if (remoteChannel != null) {
+                    remoteChannel.close();
+                    remoteChannel = null;
+                }
+                if (quicStreamChannel != null) {
+                    quicStreamChannel.shutdownOutput();
+                    quicStreamChannel.close();
+                    quicStreamChannel = null;
+                }
             }
 
             /*if(workerGroup != null){
