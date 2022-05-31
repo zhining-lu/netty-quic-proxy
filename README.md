@@ -1,7 +1,8 @@
 # netty-websocket-proxy
-A  implementation of Forward-proxy in Java base on netty4 framework use uses quic protocol.
+A implementation of Forward-proxy in Java base on netty4 framework uses quic protocol.
 
 # Features
+- [x] QUIC support
 - [x] UDP support
 - [x] SOCKS5 support
 
