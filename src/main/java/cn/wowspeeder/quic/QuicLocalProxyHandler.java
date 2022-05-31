@@ -162,7 +162,6 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-        logger.info("Channel(Local) {} is incative", clientChannel);
         proxyChannelClose();
     }
 
@@ -211,6 +210,11 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     remoteStreamChannel = null;
                 }
                 if(quicChannel != null){
+                    quicChannel.collectStats().addListener(f -> {
+                        if (f.isSuccess()) {
+                            logger.info("QuicChannel closed: {}", f.getNow());
+                        }
+                    });
                     quicChannel.close();
                     quicChannel = null;
                 }
