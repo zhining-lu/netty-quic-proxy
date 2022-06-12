@@ -54,6 +54,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.SO_RCVBUF, 2 * 1024 * 1024)// 读缓冲区为2M
                     .option(ChannelOption.SO_SNDBUF, 2 * 1024 * 1024)// 发送缓冲区为2M
+                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 4 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                     .option(ChannelOption.TCP_NODELAY, false)
                     .handler(
                             new ChannelInitializer<Channel>() {
@@ -77,6 +78,20 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                         f = false;
                                                     }
                                                     quicStreamChannel.writeAndFlush(msg.retain());
+                                                }
+                                                //rate control
+                                                @Override
+                                                public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+                                                    if(!quicStreamChannel.isWritable()){
+                                                        ctx.channel().config().setAutoRead(false);
+                                                    }
+                                                }
+
+                                                @Override
+                                                public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+                                                    if(ctx.channel().isWritable()){
+                                                        quicStreamChannel.config().setAutoRead(true);
+                                                    }
                                                 }
 
                                                 @Override
@@ -158,6 +173,22 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
         proxyChannelClose();
+    }
+    //rate control
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        if(remoteChannel != null){
+            if(!remoteChannel.isWritable()){
+                ctx.channel().config().setAutoRead(false);
+            }
+        }
+    }
+
+    @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+        if(ctx.channel().isWritable()){
+            remoteChannel.config().setAutoRead(true);
+        }
     }
 
     @Override
