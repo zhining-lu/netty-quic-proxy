@@ -9,4 +9,4 @@ fi
 homepath=`pwd`
 log=$homepath/logs/sw-proxy.log
 echo "starting server proxy program, logging to $log"
-nohup java -Xms512m -Xmx512m -jar ./lib/netty-quic-proxy-1.1.0.jar -s -conf="./conf/config-example-server.json" >/dev/null 2>&1 &
+nohup java -Xms512m -Xmx512m -jar ./lib/netty-quic-proxy-1.2.0.jar -s -conf="./conf/config-example-server.json" >/dev/null 2>&1 &
