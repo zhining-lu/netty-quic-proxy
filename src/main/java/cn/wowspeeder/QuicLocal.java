@@ -21,10 +21,12 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.incubator.codec.quic.QuicChannel;
 import io.netty.incubator.codec.quic.QuicSslContext;
 import io.netty.incubator.codec.quic.QuicSslContextBuilder;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.FastThreadLocal;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -38,7 +40,7 @@ public class QuicLocal {
     private static final EventLoopGroup bossGroup = new NioEventLoopGroup();
     private static final EventLoopGroup workerGroup = new NioEventLoopGroup();
     private static final EventLoopGroup workerGroup2 = new NioEventLoopGroup();
-    private static final EventExecutorGroup eventGroup = new DefaultEventExecutorGroup(24);
+    private static final EventExecutorGroup eventGroup = new DefaultEventExecutorGroup(12);
 
     private static QuicLocal QuicLocal = new QuicLocal();
 
@@ -66,6 +68,8 @@ public class QuicLocal {
         Base64Encrypt.getInstance().init(password);
         ServerBootstrap tcpBootstrap = new ServerBootstrap();
         final QuicSslContext sslContext = getSslContext();
+        final FastThreadLocal quicChannelThreadLocal = new FastThreadLocal<QuicChannel>();
+
         //local socks5  server ,tcp
         tcpBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
                 .option(ChannelOption.SO_RCVBUF, 2 * 1024 * 1024)// 接收缓冲区为2M
@@ -93,7 +97,7 @@ public class QuicLocal {
 //                                .addLast(new LoggingHandler(LogLevel.INFO))
                                 .addLast(new SocksPortUnificationServerHandler())
                                 .addLast(SocksServerHandler.INSTANCE)
-                                .addLast(eventGroup, new QuicLocalProxyHandler( workerGroup2, sslContext, server, port, password));
+                                .addLast(eventGroup, new QuicLocalProxyHandler( workerGroup2, sslContext, quicChannelThreadLocal, server, port, password));
                     }
                 });
 

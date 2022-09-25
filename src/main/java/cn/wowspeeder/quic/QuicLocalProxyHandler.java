@@ -30,6 +30,7 @@ import io.netty.incubator.codec.quic.*;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.FastThreadLocal;
 import io.netty.util.concurrent.Future;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -39,6 +40,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> {
@@ -55,12 +57,14 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
     private String password;
     private List<ByteBuf> clientBuffs;
     private QuicSslContext SslContext;
+    private FastThreadLocal quicChannelThreadLocal;
 
-    public QuicLocalProxyHandler(EventLoopGroup workerGroup, QuicSslContext SslContext, String server, Integer port, String password) {
+    public QuicLocalProxyHandler(EventLoopGroup workerGroup, QuicSslContext SslContext, FastThreadLocal quicChannelThreadLocal, String server, Integer port, String password) {
         this.password = password;
         this.SslContext = SslContext;
         this.ssServer = new InetSocketAddress(server, port);
         this.workerGroup = workerGroup;
+        this.quicChannelThreadLocal = quicChannelThreadLocal;
     }
 
     @Override
@@ -83,64 +87,30 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
             String URI = "GET /" + targetAddrBase64 + "\r\n";
             logger.info("URI: GET /" + targetAddrBase64 + "  ,target: " + targetAddr.dstAddr() + ":" + targetAddr.dstPort());
 
-            long startTime0 = System.currentTimeMillis();
-//            workerGroup = new NioEventLoopGroup(1);
-            ChannelHandler codec = new QuicClientCodecBuilder()
-                    .sslEngineProvider(q -> SslContext.newEngine(q.alloc(), ssServer.getHostString(), ssServer.getPort()))
-                    .maxIdleTimeout(1000 * 60 * 10, TimeUnit.MILLISECONDS)
-                    .initialMaxData( 1024 * 1024 * 20) //20M
-                    // As we don't want to support remote initiated streams just setup the limit for local initiated
-                    // streams in this example.
-                    .initialMaxStreamDataBidirectionalLocal( 1024 * 1024 * 20) //2M
-                    .initialMaxStreamDataBidirectionalRemote( 1024 * 1024 * 20) //2M
-                    .maxAckDelay(10,TimeUnit.MILLISECONDS)
-                    .build();
-            logger.info("Codec bulid time: {}", (System.currentTimeMillis() - startTime0));
-            proxyClient = new Bootstrap();//
+            QuicChannel qctl = (QuicChannel) quicChannelThreadLocal.get();
 
-            Channel channel = proxyClient.group(workerGroup)
-                    .channel(NioDatagramChannel.class)
-                    .option(ChannelOption.SO_RCVBUF, 20 * 1024 * 1024)// 接收缓冲区为20M
-                    .option(ChannelOption.SO_SNDBUF, 20 * 1024 * 1024)// 发送缓冲区为20M
-                    .handler(codec)
-                    .bind(0).sync().channel();
-
-            QuicChannelBootstrap quicChannelBootstrap = QuicChannel.newBootstrap(channel)
-                    .streamHandler(new ChannelInboundHandlerAdapter() {
-                        @Override
-                        public void channelActive(ChannelHandlerContext ctx) {
-                            // As we did not allow any remote initiated streams we will never see this method called.
-                            // That said just let us keep it here to demonstrate that this handle would be called
-                            // for each remote initiated stream.
-                            ctx.close();
-                        }
-                    })
-                    .remoteAddress(new InetSocketAddress(ssServer.getHostString(), ssServer.getPort()));
-
-            quicChannelBootstrap
-                    .connect()
-                    .addListener(f -> {
-                        if (f.isSuccess()) {
-                            quicChannel = (QuicChannel) f.get();
-                            remoteStreamChannel = createStream(quicChannel).sync().getNow();
-                            remoteStreamChannel.writeAndFlush(Unpooled.copiedBuffer(URI, CharsetUtil.UTF_8));
-                            //Sleep 2ms repairs the delay of the server accepting the second bytebuf. The cause of the problem is unknown
-                            Thread.sleep(2);
-                            //write remaining bufs
-                            if (clientBuffs != null) {
-                                ListIterator<ByteBuf> bufsIterator = clientBuffs.listIterator();
-                                while (bufsIterator.hasNext()) {
-                                    ByteBuf byteBuf = bufsIterator.next();
-                                    remoteStreamChannel.writeAndFlush(byteBuf);
-                                }
-                                clientBuffs = null;
-                            }
-                            logger.info("channel {}, connect server({}) {}, target: {}, time: {} {}", remoteStreamChannel, (ssServer.getHostString()+":"+ ssServer.getPort()), f.isSuccess(), targetAddr.dstAddr() + ":" + targetAddr.dstPort(), System.currentTimeMillis()-startTime0, System.currentTimeMillis());
-                        } else {
-                            logger.info("channel {}, connect server({}) {}, target: {}, cause {}, time: {}", remoteStreamChannel, (ssServer.getHostString()+":"+ ssServer.getPort()), f.isSuccess(), targetAddr.dstAddr() + ":" + targetAddr.dstPort(), f.cause(), System.currentTimeMillis()-startTime0);
-                            proxyChannelClose();
-                        }
-                    });
+            if(qctl != null ){
+                logger.info("open: {}, writable: {}, timeout: {}, active: {}", qctl.isOpen(), qctl.isWritable() ,qctl.isTimedOut(), qctl.isActive());
+            }
+            if(qctl != null && qctl.isActive() ){
+                quicChannel = qctl;
+            }else{
+                quicChannel = createQuicChannel();
+                quicChannelThreadLocal.set(quicChannel);
+            }
+            remoteStreamChannel = createStream(quicChannel).sync().getNow();
+            remoteStreamChannel.writeAndFlush(Unpooled.copiedBuffer(URI, CharsetUtil.UTF_8));
+            //Sleep 2ms repairs the delay of the server accepting the second bytebuf. The cause of the problem is unknown
+            Thread.sleep(2);
+            //write remaining bufs
+            if (clientBuffs != null) {
+                ListIterator<ByteBuf> bufsIterator = clientBuffs.listIterator();
+                while (bufsIterator.hasNext()) {
+                    ByteBuf byteBuf = bufsIterator.next();
+                    remoteStreamChannel.writeAndFlush(byteBuf);
+                }
+                clientBuffs = null;
+            }
         }
 
         if (remoteStreamChannel == null) {
@@ -170,6 +140,45 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
 //        super.exceptionCaught(ctx, cause);
         cause.printStackTrace();
         proxyChannelClose();
+    }
+
+    private QuicChannel createQuicChannel() throws InterruptedException, ExecutionException {
+        long startTime0 = System.currentTimeMillis();
+        ChannelHandler codec = new QuicClientCodecBuilder()
+                .sslEngineProvider(q -> SslContext.newEngine(q.alloc(), ssServer.getHostString(), ssServer.getPort()))
+                .maxIdleTimeout(60, TimeUnit.SECONDS)
+                .initialMaxData(1024 * 1024 * 20) //20M
+                // As we don't want to support remote initiated streams just setup the limit for local initiated
+                // streams in this example.
+                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 20) //2M
+                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 20) //2M
+                .maxAckDelay(10, TimeUnit.MILLISECONDS)
+                .build();
+        logger.info("Codec bulid time: {}", (System.currentTimeMillis() - startTime0));
+        proxyClient = new Bootstrap();//
+
+        Channel channel = proxyClient.group(workerGroup)
+                .channel(NioDatagramChannel.class)
+                .option(ChannelOption.SO_RCVBUF, 20 * 1024 * 1024)// 接收缓冲区为20M
+                .option(ChannelOption.SO_SNDBUF, 20 * 1024 * 1024)// 发送缓冲区为20M
+                .handler(codec)
+                .bind(0).sync().channel();
+
+        QuicChannelBootstrap quicChannelBootstrap = QuicChannel.newBootstrap(channel)
+                .streamHandler(new ChannelInboundHandlerAdapter() {
+                    @Override
+                    public void channelActive(ChannelHandlerContext ctx) {
+                        // As we did not allow any remote initiated streams we will never see this method called.
+                        // That said just let us keep it here to demonstrate that this handle would be called
+                        // for each remote initiated stream.
+                        ctx.close();
+                    }
+                }).remoteAddress(new InetSocketAddress(ssServer.getHostString(), ssServer.getPort()));
+
+        QuicChannel quicChannel = quicChannelBootstrap.connect().get();
+        logger.info("channel {}, connect server({}) {}, target: {}, time: {} ", quicChannel, (ssServer.getHostString()+":"+ ssServer.getPort()), true, targetAddr.dstAddr() + ":" + targetAddr.dstPort(), System.currentTimeMillis()-startTime0, System.currentTimeMillis());
+        logger.info(Thread.currentThread().getName());
+        return quicChannel;
     }
 
     Future<QuicStreamChannel> createStream(QuicChannel quicChannel) {
@@ -209,7 +218,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     remoteStreamChannel.close();
                     remoteStreamChannel = null;
                 }
-                if(quicChannel != null){
+                /*if(quicChannel != null){
                     quicChannel.collectStats().addListener(f -> {
                         if (f.isSuccess()) {
                             logger.info("QuicChannel closed: {}", f.getNow());
@@ -217,7 +226,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     });
                     quicChannel.close();
                     quicChannel = null;
-                }
+                }*/
             /*if(workerGroup != null){
                 workerGroup.shutdownGracefully();
             }*/

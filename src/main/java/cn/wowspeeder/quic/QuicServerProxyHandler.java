@@ -69,7 +69,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                     return super.newIdleStateEvent(state, first);
                                                 }
                                             })
-                                            .addLast("tcpProxy", new SimpleChannelInboundHandler<ByteBuf>() {
+                                            .addLast("quicProxy", new SimpleChannelInboundHandler<ByteBuf>() {
                                                 boolean f = true;
                                                 @Override
                                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
