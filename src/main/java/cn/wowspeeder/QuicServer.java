@@ -69,7 +69,7 @@ public class QuicServer {
         QuicSslContext sslContext = getSslContext();
 
         ChannelHandler codec = new QuicServerCodecBuilder().sslContext(sslContext)
-                .maxIdleTimeout(60, TimeUnit.SECONDS)
+                .maxIdleTimeout(SWCommon.TCP_PROXY_IDEL_TIME, TimeUnit.SECONDS)
                 // Configure some limits for the maximal number of streams (and the data) that we want to handle.
                 .initialMaxData(1024 * 1024 * 20) //20M
                 .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 20)  //2M

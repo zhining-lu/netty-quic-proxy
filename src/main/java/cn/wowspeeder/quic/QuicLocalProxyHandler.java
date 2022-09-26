@@ -146,7 +146,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
         long startTime0 = System.currentTimeMillis();
         ChannelHandler codec = new QuicClientCodecBuilder()
                 .sslEngineProvider(q -> SslContext.newEngine(q.alloc(), ssServer.getHostString(), ssServer.getPort()))
-                .maxIdleTimeout(60, TimeUnit.SECONDS)
+                .maxIdleTimeout(SWCommon.TCP_PROXY_IDEL_TIME, TimeUnit.SECONDS)
                 .initialMaxData(1024 * 1024 * 20) //20M
                 // As we don't want to support remote initiated streams just setup the limit for local initiated
                 // streams in this example.
