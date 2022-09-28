@@ -57,9 +57,9 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
     private String password;
     private List<ByteBuf> clientBuffs;
     private QuicSslContext SslContext;
-    private FastThreadLocal quicChannelThreadLocal;
+    private FastThreadLocal<QuicChannel> quicChannelThreadLocal;
 
-    public QuicLocalProxyHandler(EventLoopGroup workerGroup, QuicSslContext SslContext, FastThreadLocal quicChannelThreadLocal, String server, Integer port, String password) {
+    public QuicLocalProxyHandler(EventLoopGroup workerGroup, QuicSslContext SslContext, FastThreadLocal<QuicChannel> quicChannelThreadLocal, String server, Integer port, String password) {
         this.password = password;
         this.SslContext = SslContext;
         this.ssServer = new InetSocketAddress(server, port);
@@ -87,7 +87,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
             String URI = "GET /" + targetAddrBase64 + "\r\n";
             logger.info("URI: GET /" + targetAddrBase64 + "  ,target: " + targetAddr.dstAddr() + ":" + targetAddr.dstPort());
 
-            QuicChannel qctl = (QuicChannel) quicChannelThreadLocal.get();
+            QuicChannel qctl = quicChannelThreadLocal.get();
 
             if(qctl != null ){
                 logger.info("open: {}, writable: {}, timeout: {}, active: {}", qctl.isOpen(), qctl.isWritable() ,qctl.isTimedOut(), qctl.isActive());
