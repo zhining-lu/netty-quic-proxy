@@ -200,6 +200,18 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                             proxyChannelClose();
                         }
                     }
+
+                    @Override
+                    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                        super.channelInactive(ctx);
+                        proxyChannelClose();
+                    }
+
+                    @Override
+                    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                        cause.printStackTrace();
+                        proxyChannelClose();
+                    }
                 });
             }
         });
