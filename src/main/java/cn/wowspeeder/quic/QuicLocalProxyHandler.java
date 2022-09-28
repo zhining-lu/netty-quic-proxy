@@ -150,9 +150,9 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                 .initialMaxData(1024 * 1024 * 20) //20M
                 // As we don't want to support remote initiated streams just setup the limit for local initiated
                 // streams in this example.
-                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 20) //2M
-                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 20) //2M
-                .maxAckDelay(10, TimeUnit.MILLISECONDS)
+                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 2) //2M
+                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 2) //2M
+//                .maxAckDelay(10, TimeUnit.MILLISECONDS)
                 .build();
         logger.info("Codec bulid time: {}", (System.currentTimeMillis() - startTime0));
         proxyClient = new Bootstrap();//
@@ -177,7 +177,6 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
 
         QuicChannel quicChannel = quicChannelBootstrap.connect().get();
         logger.info("channel {}, connect server({}) {}, target: {}, time: {} ", quicChannel, (ssServer.getHostString()+":"+ ssServer.getPort()), true, targetAddr.dstAddr() + ":" + targetAddr.dstPort(), System.currentTimeMillis()-startTime0, System.currentTimeMillis());
-        logger.info(Thread.currentThread().getName());
         return quicChannel;
     }
 

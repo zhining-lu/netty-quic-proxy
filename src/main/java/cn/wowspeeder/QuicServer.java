@@ -72,11 +72,11 @@ public class QuicServer {
                 .maxIdleTimeout(SWCommon.TCP_PROXY_IDEL_TIME, TimeUnit.SECONDS)
                 // Configure some limits for the maximal number of streams (and the data) that we want to handle.
                 .initialMaxData(1024 * 1024 * 20) //20M
-                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 20)  //2M
-                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 20) //2M
+                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 2)  //2M
+                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 2) //2M
                 .initialMaxStreamsBidirectional(2000 * 1000)
                 .initialMaxStreamsUnidirectional(2000 * 1000)
-                .maxAckDelay(10,TimeUnit.MILLISECONDS)
+//                .maxAckDelay(10,TimeUnit.MILLISECONDS)
 
                 // Setup a token handler. In a production system you would want to implement and provide your custom
                 // one.
