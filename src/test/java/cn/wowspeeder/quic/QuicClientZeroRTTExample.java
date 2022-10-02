@@ -1,77 +1,72 @@
 package cn.wowspeeder.quic;
 
-import cn.wowspeeder.encryption.Base64Encrypt;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.ChannelInputShutdownReadComplete;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import io.netty.incubator.codec.quic.*;
+import io.netty.incubator.codec.quic.EarlyDataSendCallback;
+import io.netty.incubator.codec.quic.QuicChannel;
+import io.netty.incubator.codec.quic.QuicChannelBootstrap;
+import io.netty.incubator.codec.quic.QuicClientCodecBuilder;
+import io.netty.incubator.codec.quic.QuicSslContext;
+import io.netty.incubator.codec.quic.QuicSslContextBuilder;
+import io.netty.incubator.codec.quic.QuicStreamChannel;
+import io.netty.incubator.codec.quic.QuicStreamType;
 import io.netty.util.CharsetUtil;
+import io.netty.util.NetUtil;
 import io.netty.util.concurrent.Future;
-
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 
 public final class QuicClientZeroRTTExample {
 
-    private  String server;
-    private  int port;
-
-    public QuicClientZeroRTTExample(String server, int port) {
-        this.server = server;
-        this.port = port;
-    }
+    private QuicClientZeroRTTExample() { }
 
     public static void main(String[] args) throws Exception {
-        QuicClientZeroRTTExample example = new QuicClientZeroRTTExample("192.168.1.131", 1888);
-        example.send();
-    }
+        QuicSslContext context = QuicSslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).
+                applicationProtocols("http/0.9").earlyData(true).build();
 
-    public void send() throws Exception {
-
-        QuicSslContext SslContext = QuicSslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).
-                applicationProtocols("http/0.9")
-                .earlyData(true)
-                .build();
-
-        newChannelAndSendData(SslContext, null);
-        newChannelAndSendData(SslContext, null);
-        /*newChannelAndSendData(SslContext, new EarlyDataSendCallback() {
+        newChannelAndSendData(context, null);
+        newChannelAndSendData(context, new EarlyDataSendCallback() {
             @Override
             public void send(QuicChannel quicChannel) {
                 createStream(quicChannel).addListener(f -> {
                     if (f.isSuccess()) {
                         QuicStreamChannel streamChannel = (QuicStreamChannel) f.getNow();
-                        System.err.println("=====earlydata send====" + System.currentTimeMillis());
                         streamChannel.writeAndFlush(
-                                Unpooled.copiedBuffer("GET Early\r\n", CharsetUtil.UTF_8));
+                                Unpooled.copiedBuffer("0rtt stream data\r\n", CharsetUtil.US_ASCII));
                     }
                 });
             }
-        });*/
+        });
     }
 
-    void newChannelAndSendData(QuicSslContext context, EarlyDataSendCallback earlyDataSendCallback) throws Exception {
+    static void newChannelAndSendData(QuicSslContext context, EarlyDataSendCallback earlyDataSendCallback) throws Exception {
         NioEventLoopGroup group = new NioEventLoopGroup(1);
         try {
-            long startTime = System.currentTimeMillis();
             ChannelHandler codec = new QuicClientCodecBuilder()
-                    .sslEngineProvider(q -> context.newEngine(q.alloc(), this.server, this.port))
-                    .maxIdleTimeout(1000 * 60, TimeUnit.MILLISECONDS)
-                    .initialMaxData(10000000 * 20)
+                    .sslEngineProvider(q -> context.newEngine(q.alloc(), "localhost", 9999))
+                    .maxIdleTimeout(5000, TimeUnit.MILLISECONDS)
+                    .initialMaxData(10000000)
                     // As we don't want to support remote initiated streams just setup the limit for local initiated
                     // streams in this example.
-                    .initialMaxStreamDataBidirectionalLocal(1000000 * 20)
+                    .initialMaxStreamDataBidirectionalLocal(1000000)
                     .build();
+
             Bootstrap bs = new Bootstrap();
             Channel channel = bs.group(group)
                     .channel(NioDatagramChannel.class)
                     .handler(codec)
                     .bind(0).sync().channel();
+
 
             QuicChannelBootstrap quicChannelBootstrap = QuicChannel.newBootstrap(channel)
                     .streamHandler(new ChannelInboundHandlerAdapter() {
@@ -83,7 +78,7 @@ public final class QuicClientZeroRTTExample {
                             ctx.close();
                         }
                     })
-                    .remoteAddress(new InetSocketAddress(this.server, this.port));
+                    .remoteAddress(new InetSocketAddress(NetUtil.LOCALHOST4, 9999));
 
             if (earlyDataSendCallback != null) {
                 quicChannelBootstrap.earlyDataSendCallBack(earlyDataSendCallback);
@@ -92,14 +87,11 @@ public final class QuicClientZeroRTTExample {
             QuicChannel quicChannel = quicChannelBootstrap
                     .connect()
                     .get();
-            System.err.println("===connected ====time: " + (System.currentTimeMillis() - startTime));
+
             QuicStreamChannel streamChannel = createStream(quicChannel).sync().getNow();
             // Write the data and send the FIN. After this its not possible anymore to write any more data.
-            System.err.println("===send other====");
-            streamChannel.writeAndFlush(Unpooled.copiedBuffer("GET Other\r\n", CharsetUtil.UTF_8))
-                    .addListener(QuicStreamChannel.SHUTDOWN_OUTPUT)
-            ;
-
+            streamChannel.writeAndFlush(Unpooled.copiedBuffer("Bye\r\n", CharsetUtil.US_ASCII))
+                    .addListener(QuicStreamChannel.SHUTDOWN_OUTPUT);
             streamChannel.closeFuture().sync();
             quicChannel.closeFuture().sync();
             channel.close().sync();
@@ -108,15 +100,13 @@ public final class QuicClientZeroRTTExample {
         }
     }
 
-    Future<QuicStreamChannel> createStream(QuicChannel quicChannel) {
-        return quicChannel.createStream(QuicStreamType.BIDIRECTIONAL, new ChannelInitializer<QuicStreamChannel>() {
-            @Override
-            protected void initChannel(QuicStreamChannel ch) throws Exception {
-                ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+    static Future<QuicStreamChannel> createStream(QuicChannel quicChannel) {
+        return quicChannel.createStream(QuicStreamType.BIDIRECTIONAL,
+                new ChannelInboundHandlerAdapter() {
                     @Override
                     public void channelRead(ChannelHandlerContext ctx, Object msg) {
                         ByteBuf byteBuf = (ByteBuf) msg;
-                        System.err.println("=recive==" + byteBuf.toString(CharsetUtil.UTF_8));
+                        System.err.println(byteBuf.toString(CharsetUtil.US_ASCII));
                         byteBuf.release();
                     }
 
@@ -130,7 +120,5 @@ public final class QuicClientZeroRTTExample {
                         }
                     }
                 });
-            }
-        });
     }
 }
