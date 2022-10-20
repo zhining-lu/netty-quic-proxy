@@ -1,5 +1,5 @@
 <assembly>
-	<id>bin</id>
+	<id>${project.build.classifier}</id>
 	<!-- 最终打包成一个用于发布的zip文件 -->
 	<formats>
 		<format>tar.gz</format>
