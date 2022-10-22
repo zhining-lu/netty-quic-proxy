@@ -187,7 +187,9 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
         if(ctx.channel().isWritable()){
-            remoteChannel.config().setAutoRead(true);
+            if(remoteChannel != null){
+                remoteChannel.config().setAutoRead(true);
+            }
         }
     }
 

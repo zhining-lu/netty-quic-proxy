@@ -32,6 +32,7 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.FastThreadLocal;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -58,6 +59,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
     private List<ByteBuf> clientBuffs;
     private QuicSslContext SslContext;
     private FastThreadLocal<QuicChannel> quicChannelThreadLocal;
+    private ScheduledFuture scheduledFutureTask;
 
     public QuicLocalProxyHandler(EventLoopGroup workerGroup, QuicSslContext SslContext, FastThreadLocal<QuicChannel> quicChannelThreadLocal, String server, Integer port, String password) {
         this.password = password;
@@ -97,6 +99,9 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
             }else{
                 quicChannel = createQuicChannel();
                 quicChannelThreadLocal.set(quicChannel);
+                // Create idleState stream for send and receive heartbeat msg periodically.
+                // One quic channel to one idleState stream.
+                createIdleStateStream(quicChannel);
             }
             remoteStreamChannel = createStream(quicChannel).sync().getNow();
             remoteStreamChannel.writeAndFlush(Unpooled.copiedBuffer(URI, CharsetUtil.UTF_8));
@@ -210,6 +215,41 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
                         cause.printStackTrace();
                         proxyChannelClose();
+                    }
+                });
+            }
+        });
+    }
+    /**
+     * This stream sends heartbeat msg periodically
+     * to prevent the quic channel from being closed due to timeout.
+     */
+    Future<QuicStreamChannel> createIdleStateStream(QuicChannel quicChannel) {
+        return quicChannel.createStream(QuicStreamType.BIDIRECTIONAL, new ChannelInitializer<QuicStreamChannel>() {
+            @Override
+            protected void initChannel(QuicStreamChannel ch) throws Exception {
+                ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                    @Override
+                    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+                        ByteBuf byteBuf = (ByteBuf) msg;
+                        logger.info("Received server heartbeat msg: {}, quic channel id: {}", byteBuf.toString(CharsetUtil.UTF_8).replaceAll("\r|\n", ""), ctx.channel().parent().id());
+                        byteBuf.release();
+                    }
+
+                    @Override
+                    public void handlerAdded(ChannelHandlerContext ctx) {
+                        //add schedule task for send heartbeat msg to server periodically
+                         scheduledFutureTask = ctx.channel().eventLoop().scheduleAtFixedRate(() -> {
+                            logger.info("Send heartbeat msg ..., quic channel id: {}, isActive: {}", ctx.channel().parent().id(), ctx.channel().parent().isActive());
+                            ctx.channel().writeAndFlush(Unpooled.copiedBuffer("GET /\r\n", CharsetUtil.UTF_8));
+                        }, SWCommon.TCP_PROXY_IDEL_TIME / 4 * 3, SWCommon.TCP_PROXY_IDEL_TIME / 4 * 3, TimeUnit.SECONDS);
+                    }
+
+                    @Override
+                    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                        super.channelInactive(ctx);
+                        scheduledFutureTask.cancel(true);
+                        ctx.channel().close();
                     }
                 });
             }
