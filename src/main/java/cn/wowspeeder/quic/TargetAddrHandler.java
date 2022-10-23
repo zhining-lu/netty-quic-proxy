@@ -32,6 +32,7 @@ public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
                 ctx.channel().writeAndFlush(Unpooled.copiedBuffer("Hi\r\n", CharsetUtil.UTF_8))
 //                                .addListener(QuicStreamChannel.SHUTDOWN_OUTPUT)
                 ;
+                logger.info("Receviced client heartbeat msg, quic channel id: {}, client ip: {}", ctx.channel().parent().id(), ((InetSocketAddress)ctx.channel().remoteAddress()).getAddress().getHostAddress());
                 break;
             default:
                 if (URI.length() < 5) {

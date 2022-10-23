@@ -226,21 +226,27 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
      */
     Future<QuicStreamChannel> createIdleStateStream(QuicChannel quicChannel) {
         return quicChannel.createStream(QuicStreamType.BIDIRECTIONAL, new ChannelInitializer<QuicStreamChannel>() {
+
+            private int sendMsgCount = 0;
+            private int RevMsgCount = 0;
+
             @Override
             protected void initChannel(QuicStreamChannel ch) throws Exception {
                 ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
                     @Override
                     public void channelRead(ChannelHandlerContext ctx, Object msg) {
                         ByteBuf byteBuf = (ByteBuf) msg;
-                        logger.info("Received server heartbeat msg: {}, quic channel id: {}", byteBuf.toString(CharsetUtil.UTF_8).replaceAll("\r|\n", ""), ctx.channel().parent().id());
+                        RevMsgCount ++;
+                        logger.info("Received server heartbeat msg[{}]: {}, quic channel id: {}",RevMsgCount, byteBuf.toString(CharsetUtil.UTF_8).replaceAll("\r|\n", ""), ctx.channel().parent().id());
                         byteBuf.release();
                     }
 
                     @Override
                     public void handlerAdded(ChannelHandlerContext ctx) {
                         //add schedule task for send heartbeat msg to server periodically
-                         scheduledFutureTask = ctx.channel().eventLoop().scheduleAtFixedRate(() -> {
-                            logger.info("Send heartbeat msg ..., quic channel id: {}, isActive: {}", ctx.channel().parent().id(), ctx.channel().parent().isActive());
+                        scheduledFutureTask = ctx.channel().eventLoop().scheduleAtFixedRate(() -> {
+                            sendMsgCount ++;
+                            logger.info("Send heartbeat msg[{}] ..., quic channel id: {}, isActive: {}, stream channel isActive: {}", sendMsgCount, ctx.channel().parent().id(), ctx.channel().parent().isActive(), ctx.channel().isActive());
                             ctx.channel().writeAndFlush(Unpooled.copiedBuffer("GET /\r\n", CharsetUtil.UTF_8));
                         }, SWCommon.TCP_PROXY_IDEL_TIME / 4 * 3, SWCommon.TCP_PROXY_IDEL_TIME / 4 * 3, TimeUnit.SECONDS);
                     }
