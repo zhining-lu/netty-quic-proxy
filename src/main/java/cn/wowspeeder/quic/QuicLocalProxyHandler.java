@@ -247,7 +247,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                         //add schedule task for send heartbeat msg to server periodically
                         scheduledFutureTask = ctx.channel().eventLoop().scheduleAtFixedRate(() -> {
                             sendMsgCount ++;
-                            logger.info("Send heartbeat msg[{}] ..., quic channel id: {}, isActive: {}, stream channel isActive: {}", sendMsgCount, ctx.channel().parent().id(), ctx.channel().parent().isActive(), ctx.channel().isActive());
+                            logger.info("Send heartbeat msg[{}] ..., lost: {}, quic channel id: {}, isActive: {}, stream channel isActive: {}", sendMsgCount, (sendMsgCount - RevMsgCount - 1), ctx.channel().parent().id(), ctx.channel().parent().isActive(), ctx.channel().isActive());
                             ctx.channel().writeAndFlush(Unpooled.copiedBuffer("GET /\r\n", CharsetUtil.UTF_8));
                         }, SWCommon.TCP_PROXY_IDEL_TIME / 4 * 3, SWCommon.TCP_PROXY_IDEL_TIME / 4 * 3, TimeUnit.SECONDS);
                     }

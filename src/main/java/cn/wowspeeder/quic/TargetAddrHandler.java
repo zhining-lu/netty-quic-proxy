@@ -20,6 +20,7 @@ public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(QuicServerProxyHandler.class);
 
     private boolean firstMsg = true;
+    private int RevMsgCount = 0;
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -33,7 +34,8 @@ public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
                 ctx.channel().writeAndFlush(Unpooled.copiedBuffer("Hi\r\n", CharsetUtil.UTF_8))
 //                                .addListener(QuicStreamChannel.SHUTDOWN_OUTPUT)
                 ;
-                logger.info("Receviced client heartbeat msg, quic channel id: {}", ctx.channel().parent().id());
+                RevMsgCount ++;
+                logger.info("Receviced client heartbeat msg[{}], quic channel id: {}", RevMsgCount, ctx.channel().parent().id());
                 break;
             default:
                 if (URI.length() < 5) {
