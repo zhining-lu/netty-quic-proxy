@@ -142,7 +142,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
+        logger.error(cause);
         cause.printStackTrace();
         proxyChannelClose();
     }
@@ -213,7 +213,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
 
                     @Override
                     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-                        super.exceptionCaught(ctx,cause);
+                        logger.error(cause);
                         cause.printStackTrace();
                         proxyChannelClose();
                     }

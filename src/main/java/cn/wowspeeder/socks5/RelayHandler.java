@@ -1,13 +1,17 @@
 package cn.wowspeeder.socks5;
 
 
+import cn.wowspeeder.quic.QuicLocalProxyHandler;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 public final class RelayHandler extends ChannelInboundHandlerAdapter {
+    private static InternalLogger logger = InternalLoggerFactory.getInstance(RelayHandler.class);
 
     private final Channel relayChannel;
 
@@ -38,7 +42,7 @@ public final class RelayHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx,cause);
+        logger.error(cause);
         cause.printStackTrace();
         ctx.close();
     }
