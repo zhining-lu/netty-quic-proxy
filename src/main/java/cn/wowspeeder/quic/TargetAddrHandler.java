@@ -6,6 +6,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.incubator.codec.quic.QuicConnectionAddress;
 import io.netty.incubator.codec.quic.QuicStreamChannel;
 import io.netty.util.CharsetUtil;
 import io.netty.util.internal.logging.InternalLogger;
@@ -32,7 +33,7 @@ public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
                 ctx.channel().writeAndFlush(Unpooled.copiedBuffer("Hi\r\n", CharsetUtil.UTF_8))
 //                                .addListener(QuicStreamChannel.SHUTDOWN_OUTPUT)
                 ;
-                logger.info("Receviced client heartbeat msg, quic channel id: {}, client ip: {}", ctx.channel().parent().id(), ((InetSocketAddress)ctx.channel().remoteAddress()).getAddress().getHostAddress());
+                logger.info("Receviced client heartbeat msg, quic channel id: {}", ctx.channel().parent().id());
                 break;
             default:
                 if (URI.length() < 5) {

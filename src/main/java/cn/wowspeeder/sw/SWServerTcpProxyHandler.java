@@ -146,7 +146,7 @@ public class SWServerTcpProxyHandler extends SimpleChannelInboundHandler<ByteBuf
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//        super.exceptionCaught(ctx,cause);
+        super.exceptionCaught(ctx,cause);
         cause.printStackTrace();
         proxyChannelClose();
     }
