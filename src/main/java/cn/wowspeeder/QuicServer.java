@@ -80,8 +80,8 @@ public class QuicServer {
 
                 // Setup a token handler. In a production system you would want to implement and provide your custom
                 // one.
-                .tokenHandler(NoValidationQuicTokenHandler.INSTANCE)
-//                .tokenHandler(InsecureQuicTokenHandler.INSTANCE)
+//                .tokenHandler(NoValidationQuicTokenHandler.INSTANCE)
+                .tokenHandler(InsecureQuicTokenHandler.INSTANCE)
                 // ChannelHandler that is added into QuicChannel pipeline.
                 .handler(new ChannelInboundHandlerAdapter() {
                     @Override
