@@ -54,7 +54,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                     .option(ChannelOption.SO_KEEPALIVE, true)
                     .option(ChannelOption.SO_RCVBUF, 2 * 1024 * 1024)// 读缓冲区为2M
                     .option(ChannelOption.SO_SNDBUF, 2 * 1024 * 1024)// 发送缓冲区为2M
-                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 4 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
+                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                     .option(ChannelOption.TCP_NODELAY, false)
                     .handler(
                             new ChannelInitializer<Channel>() {

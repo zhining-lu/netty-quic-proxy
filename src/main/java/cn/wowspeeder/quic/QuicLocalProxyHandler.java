@@ -164,8 +164,8 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
 
         Channel channel = proxyClient.group(workerGroup)
                 .channel(NioDatagramChannel.class)
-                .option(ChannelOption.SO_RCVBUF, 20 * 1024 * 1024)// 接收缓冲区为20M
-                .option(ChannelOption.SO_SNDBUF, 20 * 1024 * 1024)// 发送缓冲区为20M
+                .option(ChannelOption.SO_RCVBUF, 10 * 1024 * 1024)// 接收缓冲区为10M
+                .option(ChannelOption.SO_SNDBUF, 10 * 1024 * 1024)// 发送缓冲区为10M
                 .handler(codec)
                 .bind(0).sync().channel();
 
