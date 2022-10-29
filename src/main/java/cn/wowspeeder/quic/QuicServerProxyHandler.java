@@ -109,6 +109,8 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                 @Override
                                                 public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 //                                                    super.exceptionCaught(ctx, cause);
+                                                    logger.error(cause);
+                                                    cause.printStackTrace();
                                                     proxyChannelClose();
                                                 }
                                             });
