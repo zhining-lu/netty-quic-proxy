@@ -85,16 +85,20 @@ public class QuicServer {
                 // ChannelHandler that is added into QuicChannel pipeline.
                 .handler(new ChannelInboundHandlerAdapter() {
                     @Override
-                    public void channelActive(ChannelHandlerContext ctx) {
+                    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                        super.channelActive(ctx);
                         QuicChannel channel = (QuicChannel) ctx.channel();
                         // Create streams etc..
                         logger.info("QuicChannel {} is active", channel);
                     }
 
-                    public void channelInactive(ChannelHandlerContext ctx) {
-                        ((QuicChannel) ctx.channel()).collectStats().addListener(f -> {
+                    @Override
+                    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                        super.channelInactive(ctx);
+                        QuicChannel quicChannel = (QuicChannel) ctx.channel();
+                        quicChannel.collectStats().addListener(f -> {
                             if (f.isSuccess()) {
-                                logger.info("QuicChannel closed: {}", f.getNow());
+                                logger.info("QuicChannel id: {}, closed: {}",quicChannel.id(), f.getNow());
                             }
                         });
                     }
