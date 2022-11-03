@@ -178,7 +178,9 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                         // for each remote initiated stream.
                         ctx.close();
                     }
-                }).remoteAddress(new InetSocketAddress(ssServer.getHostString(), ssServer.getPort()));
+                })
+//                .option(QuicChannelOption.QLOG, new QLogConfiguration("./logs/", "QlogTitle", "QlogDesc"))
+                .remoteAddress(new InetSocketAddress(ssServer.getHostString(), ssServer.getPort()));
 
         QuicChannel quicChannel = quicChannelBootstrap.connect().get();
         logger.info("channel {}, connect server({}) {}, target: {}, time: {} ", quicChannel, (ssServer.getHostString()+":"+ ssServer.getPort()), true, targetAddr.dstAddr() + ":" + targetAddr.dstPort(), System.currentTimeMillis()-startTime0, System.currentTimeMillis());

@@ -77,7 +77,7 @@ public class QuicServer {
                 .initialMaxStreamsBidirectional(2000 * 1000)
                 .initialMaxStreamsUnidirectional(2000 * 1000)
 //                .maxAckDelay(10,TimeUnit.MILLISECONDS)
-
+//                .option(QuicChannelOption.QLOG, new QLogConfiguration("./logs/", "QlogTitle", "QlogDesc"))
                 // Setup a token handler. In a production system you would want to implement and provide your custom
                 // one.
                 .tokenHandler(NoValidationQuicTokenHandler.INSTANCE)
