@@ -76,6 +76,7 @@ public class QuicServer {
                 .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 2) //2M
                 .initialMaxStreamsBidirectional(2000 * 1000)
                 .initialMaxStreamsUnidirectional(2000 * 1000)
+                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(5 * 1024 * 1024, 10 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
 //                .maxAckDelay(10,TimeUnit.MILLISECONDS)
 //                .option(QuicChannelOption.QLOG, new QLogConfiguration("./logs/", "QlogTitle", "QlogDesc"))
                 // Setup a token handler. In a production system you would want to implement and provide your custom
