@@ -92,7 +92,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
             QuicChannel qctl = quicChannelThreadLocal.get();
 
             if(qctl != null ){
-                logger.info("open: {}, writable: {}, timeout: {}, active: {}", qctl.isOpen(), qctl.isWritable() ,qctl.isTimedOut(), qctl.isActive());
+                logger.info("quic Channel id: {}, open: {}, writable: {}, timeout: {}, active: {}", qctl.id(), qctl.isOpen(), qctl.isWritable() ,qctl.isTimedOut(), qctl.isActive());
             }
             if(qctl != null && qctl.isActive() ){
                 quicChannel = qctl;
@@ -232,6 +232,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
 
             private int sendMsgCount = 0;
             private int RevMsgCount = 0;
+            private int lostCount = 0;
 
             @Override
             protected void initChannel(QuicStreamChannel ch) throws Exception {
@@ -249,8 +250,14 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                         //add schedule task for send heartbeat msg to server periodically
                         scheduledFutureTask = ctx.channel().eventLoop().scheduleAtFixedRate(() -> {
                             sendMsgCount ++;
-                            logger.info("Send heartbeat msg[{}] ..., lost: {}, quic channel id: {}, isActive: {}, stream channel isActive: {}, isAutoRead: {}", sendMsgCount, (sendMsgCount - RevMsgCount - 1), ctx.channel().parent().id(), ctx.channel().parent().isActive(), ctx.channel().isActive(), ctx.channel().config().isAutoRead());
+                            lostCount = sendMsgCount - RevMsgCount - 1;
+                            logger.info("Send heartbeat msg[{}] ..., lost: {}, quic channel id: {}, isActive: {}, stream channel isActive: {}, isAutoRead: {}", sendMsgCount, lostCount, ctx.channel().parent().id(), ctx.channel().parent().isActive(), ctx.channel().isActive(), ctx.channel().config().isAutoRead());
                             ctx.channel().writeAndFlush(Unpooled.copiedBuffer("GET /\r\n", CharsetUtil.UTF_8));
+                            if(lostCount >= 2){
+                                //close the quic channel if lostCount >= 2
+                                ctx.channel().parent().close();
+                                logger.info("Close quic channel id: {}", ctx.channel().parent().id());
+                            }
                         }, SWCommon.TCP_PROXY_IDEL_TIME / 4 * 3, SWCommon.TCP_PROXY_IDEL_TIME / 4 * 3, TimeUnit.SECONDS);
                     }
 
