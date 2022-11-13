@@ -25,7 +25,7 @@ public class QuicServerCheckerReceive extends SimpleChannelInboundHandler<Object
         ByteBuf byteBuf = (ByteBuf) msg;
 //        ctx.channel().pipeline().remove(this);
         if(i < 3){
-            logger.info("Channel: {}, Receive {}, readableBytes： {}, time: {} {}", ctx.channel().id(), i,byteBuf.readableBytes(),System.currentTimeMillis()-startTime, System.currentTimeMillis() );
+            logger.info("Quic channel id: {},  receive {}, readableBytes： {}, time: {} {}", ctx.channel().parent().id(), i, byteBuf.readableBytes(), System.currentTimeMillis()-startTime, System.currentTimeMillis() );
             startTime = System.currentTimeMillis();
             i++;
         }

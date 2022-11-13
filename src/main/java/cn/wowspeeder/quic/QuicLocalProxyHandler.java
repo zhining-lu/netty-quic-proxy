@@ -106,7 +106,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
             remoteStreamChannel = createStream(quicChannel).sync().getNow();
             remoteStreamChannel.writeAndFlush(Unpooled.copiedBuffer(URI, CharsetUtil.UTF_8));
             //Sleep 2ms repairs the delay of the server accepting the second bytebuf. The cause of the problem is unknown
-            Thread.sleep(2);
+//            Thread.sleep(2);
             //write remaining bufs
             if (clientBuffs != null) {
                 ListIterator<ByteBuf> bufsIterator = clientBuffs.listIterator();
