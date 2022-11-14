@@ -73,10 +73,10 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                 boolean f = true;
                                                 @Override
                                                 protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-                                                    if(f){
-                                                        logger.info("channel: {}, read remote, readableBytes： {}, time: {}", ctx.channel().id(), msg.readableBytes(), System.currentTimeMillis() );
-                                                        f = false;
-                                                    }
+//                                                    if(f){
+//                                                        logger.info("channel: {}, read remote, readableBytes： {}, time: {}", ctx.channel().id(), msg.readableBytes(), System.currentTimeMillis() );
+//                                                        f = false;
+//                                                    }
                                                     quicStreamChannel.writeAndFlush(msg.retain());
                                                 }
                                                 //rate control

@@ -24,11 +24,11 @@ public class QuicServerCheckerReceive extends SimpleChannelInboundHandler<Object
     protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
         ByteBuf byteBuf = (ByteBuf) msg;
 //        ctx.channel().pipeline().remove(this);
-        if(i < 3){
-            logger.info("Quic channel id: {},  receive {}, readableBytes： {}, time: {} {}", ctx.channel().parent().id(), i, byteBuf.readableBytes(), System.currentTimeMillis()-startTime, System.currentTimeMillis() );
-            startTime = System.currentTimeMillis();
-            i++;
-        }
+//        if(i < 3){
+//            logger.info("Quic channel id: {},  receive {}, readableBytes： {}, time: {} {}", ctx.channel().parent().id(), i, byteBuf.readableBytes(), System.currentTimeMillis()-startTime, System.currentTimeMillis() );
+//            startTime = System.currentTimeMillis();
+//            i++;
+//        }
         ctx.fireChannelRead(byteBuf);
     }
 
