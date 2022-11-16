@@ -59,7 +59,6 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
     private List<ByteBuf> clientBuffs;
     private QuicSslContext SslContext;
     private FastThreadLocal<QuicChannel> quicChannelThreadLocal;
-    private ScheduledFuture scheduledFutureTask;
 
     public QuicLocalProxyHandler(EventLoopGroup workerGroup, QuicSslContext SslContext, FastThreadLocal<QuicChannel> quicChannelThreadLocal, String server, Integer port, String password) {
         this.password = password;
@@ -229,14 +228,14 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
      */
     Future<QuicStreamChannel> createIdleStateStream(QuicChannel quicChannel) {
         return quicChannel.createStream(QuicStreamType.BIDIRECTIONAL, new ChannelInitializer<QuicStreamChannel>() {
-
-            private int sendMsgCount = 0;
-            private int RevMsgCount = 0;
-            private int lostCount = 0;
-
             @Override
             protected void initChannel(QuicStreamChannel ch) throws Exception {
                 ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                    private ScheduledFuture scheduledFutureTask;
+                    private int sendMsgCount = 0;
+                    private int RevMsgCount = 0;
+                    private int lostCount = 0;
+
                     @Override
                     public void channelRead(ChannelHandlerContext ctx, Object msg) {
                         ByteBuf byteBuf = (ByteBuf) msg;
