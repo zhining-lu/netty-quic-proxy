@@ -4,6 +4,7 @@ import cn.wowspeeder.sw.SWCommon;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
+import io.netty.channel.socket.ChannelInputShutdownReadComplete;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -192,6 +193,13 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
             if(remoteChannel != null){
                 remoteChannel.config().setAutoRead(true);
             }
+        }
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
+        if (evt == ChannelInputShutdownReadComplete.INSTANCE) {
+            proxyChannelClose();
         }
     }
 
