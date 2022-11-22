@@ -3,7 +3,7 @@ A implementation of Forward-proxy in Java base on netty4 framework uses quic pro
 
 # Features
 - [x] QUIC support
-- [x] UDP support
+- [x] 0-RTT support
 - [x] SOCKS5 support
 
 # Environment
