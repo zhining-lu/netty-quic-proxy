@@ -64,8 +64,8 @@ public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
                     int port = Integer.parseInt(m.group(2));
                     ctx.channel().attr(QuicCommon.REMOTE_DES).set(InetSocketAddress.createUnresolved(host, port));
                     //empty bytebuf
-                    byteBuf = Unpooled.buffer();
-                    ctx.fireChannelRead(byteBuf);
+                    ByteBuf emptyBuf = Unpooled.buffer();
+                    ctx.fireChannelRead(emptyBuf);
                     //remove lineDecoder and this handler
                     ctx.pipeline().remove(this);
                     ctx.pipeline().remove("lineDecoder");

@@ -128,22 +128,25 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                     logger.info("channel id {}, {}<->{}<->{} connect {}, time: {} {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), future.channel().localAddress().toString(), clientRecipient.toString(), future.isSuccess(), System.currentTimeMillis() - startTime, System.currentTimeMillis());
                                     remoteChannel = future.channel();
                                     logger.info("clientBuffs: {}, length: {}", clientBuffs, clientBuffs.size());
-                                    if (clientBuffs != null) {
-                                        ListIterator<ByteBuf> bufsIterator = clientBuffs.listIterator();
-                                        while (bufsIterator.hasNext()) {
-                                            ByteBuf byteBuf = bufsIterator.next();
-                                            if(byteBuf.readableBytes() > 0){
-                                                logger.info("channel: {}, write(clientBuffs)：{}, time: {}", ctx.channel().id(), byteBuf.readableBytes(), System.currentTimeMillis() );
-                                                remoteChannel.writeAndFlush(byteBuf);
+                                    synchronized (this){
+                                        if (clientBuffs != null) {
+                                            ListIterator<ByteBuf> bufsIterator = clientBuffs.listIterator();
+                                            while (bufsIterator.hasNext()) {
+                                                ByteBuf byteBuf = bufsIterator.next();
+                                                if(byteBuf.readableBytes() > 0){
+                                                    logger.info("channel: {}, write(clientBuffs)：{}, time: {}", ctx.channel().id(), byteBuf.readableBytes(), System.currentTimeMillis() );
+                                                    remoteChannel.writeAndFlush(byteBuf);
+                                                }
                                             }
+                                            clientBuffs = null;
                                         }
-                                        clientBuffs = null;
                                     }
                                 } else {
                                     logger.error("channel id {}, {}<->{} connect {},cause {}, time: {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), clientRecipient.toString(), future.isSuccess(), future.cause(), System.currentTimeMillis() - startTime);
                                     proxyChannelClose();
                                 }
                             } catch (Exception e) {
+                                logger.error(e);
                                 proxyChannelClose();
                             }
                         });
@@ -154,20 +157,22 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
             }
         }
 
-        if (remoteChannel == null) {
-            if (clientBuffs == null) {
-                clientBuffs = new ArrayList<>();
-            }
-            clientBuffs.add(msg.retain());
-//            logger.debug("channel id {},add to client buff list", clientChannel.id().toString());
-        } else {
-            if (clientBuffs == null) {
-//                logger.info("channel:{}, write: {}, time: {}",remoteChannel.id() ,msg.readableBytes(), System.currentTimeMillis());
-                remoteChannel.writeAndFlush(msg.retain());
-            } else {
+        synchronized (this){
+            if (remoteChannel == null) {
+                if (clientBuffs == null) {
+                    clientBuffs = new ArrayList<>();
+                }
                 clientBuffs.add(msg.retain());
-            }
+//            logger.debug("channel id {},add to client buff list", clientChannel.id().toString());
+            } else {
+                if (clientBuffs == null) {
+//                logger.info("channel:{}, write: {}, time: {}",remoteChannel.id() ,msg.readableBytes(), System.currentTimeMillis());
+                    remoteChannel.writeAndFlush(msg.retain());
+                } else {
+                    clientBuffs.add(msg.retain());
+                }
 //            logger.debug("channel id {},remote channel write {}", clientChannel.id().toString(), msg.readableBytes());
+            }
         }
     }
 
@@ -234,7 +239,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
             }*/
 
         } catch (Exception e) {
-//            logger.error("close channel error", e);
+            logger.error("close channel error", e);
         }
     }
 
