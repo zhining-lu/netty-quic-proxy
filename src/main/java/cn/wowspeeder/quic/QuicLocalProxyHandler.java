@@ -2,30 +2,13 @@ package cn.wowspeeder.quic;
 
 import cn.wowspeeder.encryption.Base64Encrypt;
 import cn.wowspeeder.sw.SWCommon;
-import cn.wowspeeder.sw.SWServerTcpProxyHandler;
-import cn.wowspeeder.websocket.WebSocketClientHandler;
-import cn.wowspeeder.websocket.WebSocketLocalFrameHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.ChannelInputShutdownReadComplete;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
-import io.netty.handler.codec.http.websocketx.WebSocketVersion;
-import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequest;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import io.netty.handler.timeout.IdleState;
-import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.incubator.codec.quic.*;
 import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
@@ -36,7 +19,6 @@ import io.netty.util.concurrent.ScheduledFuture;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
-import javax.net.ssl.SSLException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -138,6 +120,22 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
         super.channelInactive(ctx);
         proxyChannelClose();
     }
+    //rate control
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) {
+        if(remoteStreamChannel != null){
+            if(!remoteStreamChannel.isWritable()){
+                ctx.channel().config().setAutoRead(false);
+            }
+        }
+    }
+
+    @Override
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) {
+        if(ctx.channel().isWritable()){
+            remoteStreamChannel.config().setAutoRead(true);
+        }
+    }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -165,6 +163,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                 .channel(NioDatagramChannel.class)
                 .option(ChannelOption.SO_RCVBUF, 10 * 1024 * 1024)// 接收缓冲区为10M
                 .option(ChannelOption.SO_SNDBUF, 10 * 1024 * 1024)// 发送缓冲区为10M
+                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(5 * 1024 * 1024, 10 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                 .handler(codec)
                 .bind(0).sync().channel();
 
@@ -179,6 +178,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     }
                 })
 //                .option(QuicChannelOption.QLOG, new QLogConfiguration("./logs/", "QlogTitle", "QlogDesc"))
+                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(5 * 1024 * 1024, 10 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                 .remoteAddress(new InetSocketAddress(ssServer.getHostString(), ssServer.getPort()));
 
         QuicChannel quicChannel = quicChannelBootstrap.connect().get();
@@ -210,6 +210,20 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                         super.channelInactive(ctx);
                         proxyChannelClose();
+                    }
+                    //rate control
+                    @Override
+                    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+                        if(!clientChannel.isWritable()){
+                            ctx.channel().config().setAutoRead(false);
+                        }
+                    }
+
+                    @Override
+                    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+                        if(ctx.channel().isWritable()){
+                            clientChannel.config().setAutoRead(true);
+                        }
                     }
 
                     @Override
