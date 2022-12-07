@@ -125,11 +125,12 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                         .addListener((ChannelFutureListener) future -> {
                             try {
                                 if (future.isSuccess()) {
-                                    logger.info("channel id {}, {}<->{}<->{} connect {}, time: {} {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), future.channel().localAddress().toString(), clientRecipient.toString(), future.isSuccess(), System.currentTimeMillis() - startTime, System.currentTimeMillis());
+                                    logger.info("channel id {}, {}<->{}<->{} connect {}, time: {} {}", quicStreamChannel == null ? null:quicStreamChannel.id().toString(), quicStreamChannel == null ? null:quicStreamChannel.remoteAddress().toString(), future.channel().localAddress().toString(), clientRecipient.toString(), future.isSuccess(), System.currentTimeMillis() - startTime, System.currentTimeMillis());
                                     remoteChannel = future.channel();
-                                    logger.info("clientBuffs: {}, length: {}", clientBuffs, clientBuffs.size());
+
                                     synchronized (this){
-                                        if (clientBuffs != null) {
+                                        if (clientBuffs != null && quicStreamChannel != null) {
+                                            logger.info("clientBuffs: {}, length: {}", clientBuffs, clientBuffs.size());
                                             ListIterator<ByteBuf> bufsIterator = clientBuffs.listIterator();
                                             while (bufsIterator.hasNext()) {
                                                 ByteBuf byteBuf = bufsIterator.next();
