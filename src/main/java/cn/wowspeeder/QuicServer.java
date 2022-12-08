@@ -76,7 +76,7 @@ public class QuicServer {
                 .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 2) //2M
                 .initialMaxStreamsBidirectional(2000 * 1000)
                 .initialMaxStreamsUnidirectional(2000 * 1000)
-                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(5 * 1024 * 1024, 10 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
+                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
 //                .maxAckDelay(10,TimeUnit.MILLISECONDS)
 //                .option(QuicChannelOption.QLOG, new QLogConfiguration("./logs/", "QlogTitle", "QlogDesc"))
                 // Setup a token handler. In a production system you would want to implement and provide your custom
@@ -129,7 +129,7 @@ public class QuicServer {
                     .channel(NioDatagramChannel.class)
                     .option(ChannelOption.SO_RCVBUF, 10 * 1024 * 1024)// 接收缓冲区为10M
                     .option(ChannelOption.SO_SNDBUF, 10 * 1024 * 1024)// 发送缓冲区为10M
-                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(5 * 1024 * 1024, 10 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
+                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                     .handler(codec)
                     .bind(server, port).sync().channel();
             logger.info("listen at {}:{}", server, port);
