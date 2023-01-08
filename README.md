@@ -10,19 +10,20 @@ A implementation of Forward-proxy in Java base on netty4 framework uses quic pro
 * JRE8
 
 # Install
-1. download netty-quic-proxy-x.x.x-bin.tar.gz
-2. tar -xzvf netty-quic-proxy-x.x.x-bin.tar.gz
+1. [download netty-quic-proxy-x.x.x.tar.gz ](https://github.com/zhining-lu/netty-quic-proxy/releases) 
+2. tar -xzvf netty-quic-proxy-x.x.x.tar.gz
 3. run
-#### as swserver
+#### as server
 ```
-java -jar ./bin/netty-quic-proxy-x.x.x.jar -s -conf="./conf/config-example-server.json"
+cd netty-quic-proxy-x.x.x/bin
+./start-server-quic-proxy.sh(Linux)
 ```
-#### as swclient
+#### as client
 ```
-java -jar ./bin/netty-quic-proxy-x.x.x.jar -c -conf="./conf/config-example-client.json"
+cd netty-quic-proxy-x.x.x/bin
+./start-local-quic-proxy.sh(Linux) or double-click start-local-quic-proxy.bat(Win)
 ```
-  Note: You can also use the command under bin to start the service. After the service starts, you can use Google Chrome and install the SwitchyOmega plug-in to surf the Internet
-
+Note: After the service starts, you can use Google Chrome and install the SwitchyOmega plug-in to surf the Internet
 # Build
 1. import as maven project
 2. maven package
