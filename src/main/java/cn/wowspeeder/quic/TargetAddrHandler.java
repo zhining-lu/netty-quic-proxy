@@ -34,7 +34,7 @@ public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
 //                                .addListener(QuicStreamChannel.SHUTDOWN_OUTPUT)
                 ;
                 RevMsgCount ++;
-                logger.info("Receviced client heartbeat msg[{}], quic channel id: {}, isOpen: {}, isWritable: {}, stream channel isOpen: {}, isWritable: {}, bytesBeforeUnwritable: {}, bytesBeforeWritable: {}", RevMsgCount, ctx.channel().parent().id(), ctx.channel().parent().isOpen(), ctx.channel().parent().isWritable(), ctx.channel().isOpen(), ctx.channel().isWritable(), ctx.channel().bytesBeforeUnwritable(), ctx.channel().bytesBeforeWritable());
+//                logger.info("Receviced client heartbeat msg[{}], quic channel id: {}, isOpen: {}, isWritable: {}, stream channel isOpen: {}, isWritable: {}, bytesBeforeUnwritable: {}, bytesBeforeWritable: {}", RevMsgCount, ctx.channel().parent().id(), ctx.channel().parent().isOpen(), ctx.channel().parent().isWritable(), ctx.channel().isOpen(), ctx.channel().isWritable(), ctx.channel().bytesBeforeUnwritable(), ctx.channel().bytesBeforeWritable());
                 break;
             default:
                 if (URI.length() < 5) {

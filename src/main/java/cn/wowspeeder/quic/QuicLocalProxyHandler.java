@@ -254,7 +254,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     public void channelRead(ChannelHandlerContext ctx, Object msg) {
                         ByteBuf byteBuf = (ByteBuf) msg;
                         RevMsgCount ++;
-                        logger.info("Received server heartbeat msg[{}]: {}, quic channel id: {}, stream channel isAutoRead: {}",RevMsgCount, byteBuf.toString(CharsetUtil.UTF_8).replaceAll("\r|\n", ""), ctx.channel().parent().id(), ctx.channel().config().isAutoRead());
+//                        logger.info("Received server heartbeat msg[{}]: {}, quic channel id: {}, stream channel isAutoRead: {}",RevMsgCount, byteBuf.toString(CharsetUtil.UTF_8).replaceAll("\r|\n", ""), ctx.channel().parent().id(), ctx.channel().config().isAutoRead());
                         byteBuf.release();
                     }
 
@@ -264,7 +264,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                         scheduledFutureTask = ctx.channel().eventLoop().scheduleAtFixedRate(() -> {
                             sendMsgCount ++;
                             lostCount = sendMsgCount - RevMsgCount - 1;
-                            logger.info("Send heartbeat msg[{}] ..., lost: {}, quic channel id: {}, isActive: {}, stream channel isActive: {}, isAutoRead: {}", sendMsgCount, lostCount, ctx.channel().parent().id(), ctx.channel().parent().isActive(), ctx.channel().isActive(), ctx.channel().config().isAutoRead());
+//                            logger.info("Send heartbeat msg[{}] ..., lost: {}, quic channel id: {}, isActive: {}, stream channel isActive: {}, isAutoRead: {}", sendMsgCount, lostCount, ctx.channel().parent().id(), ctx.channel().parent().isActive(), ctx.channel().isActive(), ctx.channel().config().isAutoRead());
                             ctx.channel().writeAndFlush(Unpooled.copiedBuffer("GET /\r\n", CharsetUtil.UTF_8));
                             if(lostCount >= 2){
                                 //close the quic channel if lostCount >= 2
