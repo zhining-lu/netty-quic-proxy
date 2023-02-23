@@ -12,10 +12,31 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.build.classifier>windows-x86_64</project.build.classifier>
-<!--		<project.build.classifier>linux-x86_64</project.build.classifier>-->
-<!--		<project.build.classifier>osx-x86_64</project.build.classifier>-->
 	</properties>
+
+	<profiles>
+		<profile>
+			<id>linux-x86_64</id>
+			<properties>
+				<project.build.classifier>linux-x86_64</project.build.classifier>
+			</properties>
+		</profile>
+		<profile>
+			<id>osx-x86_64</id>
+			<properties>
+				<project.build.classifier>osx-x86_64</project.build.classifier>
+			</properties>
+		</profile>
+		<profile>
+			<id>windows-x86_64</id>
+			<properties>
+				<project.build.classifier>windows-x86_64</project.build.classifier>
+			</properties>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+		</profile>
+	</profiles>
 
 	<build>
 		<plugins>
