@@ -24,16 +24,23 @@ public class Application {
         String configPath = commandLine.getOptionValue("conf", "conf/config.json");
 
         logger.info("config path:{}", configPath);
-        if (commandLine.hasOption("s")) {
+        try{
+            if (commandLine.hasOption("s")) {
 //            SWServer.getInstance().start(configPath);
-            QuicServer.getInstance().start(configPath);
-        } else if (commandLine.hasOption("c")) {
+                QuicServer.getInstance().start(configPath);
+            } else if (commandLine.hasOption("c")) {
 //            SWLocal.getInstance().start(configPath);
-            QuicLocal.getInstance().start(configPath);
-        } else {
-            logger.error("not found run type");
+                QuicLocal.getInstance().start(configPath);
+            } else {
+                logger.error("not found run type");
+            }
+            logger.info("start success!");
+
+        }catch (Exception e){
+            logger.error(e);
+            QuicLocal.getInstance().stop();
+            System.exit(-1);
         }
 
-        logger.info("start success!");
     }
 }
