@@ -7,7 +7,7 @@ A implementation of Forward-proxy in Java base on netty4 framework uses quic pro
 - [x] SOCKS5 support
 
 # Environment
-* JRE8
+* JDK11
 
 # Install
 1. [download netty-quic-proxy-x.x.x.tar.gz ](https://github.com/zhining-lu/netty-quic-proxy/releases) 
