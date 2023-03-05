@@ -23,7 +23,7 @@ cd netty-quic-proxy-x.x.x/bin
 cd netty-quic-proxy-x.x.x/bin
 ./start-local-quic-proxy.sh(Linux) or double-click start-local-quic-proxy.bat(Win)
 ```
-Note: After the service starts, you can use Google Chrome and install the SwitchyOmega plug-in to surf the Internet
+Note: On the window client, you can also use v2ray-Win-Client to surf the Internet
 # Build
 1. import as maven project
 2. maven package
