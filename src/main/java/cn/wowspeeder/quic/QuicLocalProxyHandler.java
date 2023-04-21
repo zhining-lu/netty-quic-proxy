@@ -148,7 +148,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
         long startTime0 = System.currentTimeMillis();
         ChannelHandler codec = new QuicClientCodecBuilder()
                 .sslEngineProvider(q -> SslContext.newEngine(q.alloc(), ssServer.getHostString(), ssServer.getPort()))
-                .maxIdleTimeout(SWCommon.TCP_PROXY_IDEL_TIME, TimeUnit.SECONDS)
+                .maxIdleTimeout(QuicCommon.QUIC_PROXY_IDEL_TIME, TimeUnit.SECONDS)
                 .initialMaxData(1024 * 1024 * 20) //20M
                 .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 2) //2M
                 .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 2) //2M
@@ -269,7 +269,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                                 ctx.channel().parent().close();
                                 logger.info("Close quic channel id: {}", ctx.channel().parent().id());
                             }
-                        }, SWCommon.TCP_PROXY_IDEL_TIME / 4 * 3, SWCommon.TCP_PROXY_IDEL_TIME / 4 * 3, TimeUnit.SECONDS);
+                        }, QuicCommon.QUIC_PROXY_IDEL_TIME / 4 * 3, QuicCommon.QUIC_PROXY_IDEL_TIME / 4 * 3, TimeUnit.SECONDS);
                     }
 
                     @Override
