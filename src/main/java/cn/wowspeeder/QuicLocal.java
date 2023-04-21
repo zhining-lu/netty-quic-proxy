@@ -97,13 +97,8 @@ public class QuicLocal {
                                 .addLast(new QuicLocalProxyHandler( workerGroup2, sslContext, quicChannelThreadLocal, server, port, password));
                     }
                 });
-
-//            logger.info("TCP Start At Port " + config.get_localPort());
         tcpBootstrap.bind(socks5Server, socks5Port).sync();
-        // one RTT is required for the first connection to quic service, and Zero RTT is required for subsequent connections
-//        new QuicClientZeroRTTExample(server, port).send(SslContext);
         logger.info("listen at {}:{}", socks5Server, socks5Port);
-
     }
 
     private QuicSslContext getSslContext() throws SSLException {

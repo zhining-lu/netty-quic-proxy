@@ -217,7 +217,6 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
     }
 
     private void proxyChannelClose() {
-//        logger.info("proxyChannelClose");
         try {
             synchronized (this){
                 if (clientBuffs != null) {

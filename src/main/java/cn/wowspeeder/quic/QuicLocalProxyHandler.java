@@ -150,8 +150,6 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                 .sslEngineProvider(q -> SslContext.newEngine(q.alloc(), ssServer.getHostString(), ssServer.getPort()))
                 .maxIdleTimeout(SWCommon.TCP_PROXY_IDEL_TIME, TimeUnit.SECONDS)
                 .initialMaxData(1024 * 1024 * 20) //20M
-                // As we don't want to support remote initiated streams just setup the limit for local initiated
-                // streams in this example.
                 .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 2) //2M
                 .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 2) //2M
 //                .maxAckDelay(10, TimeUnit.MILLISECONDS)
@@ -286,7 +284,6 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
     }
 
     private void proxyChannelClose() {
-//        logger.info("proxyChannelClose");
         try {
             synchronized (this){
                 if (clientBuffs != null) {
