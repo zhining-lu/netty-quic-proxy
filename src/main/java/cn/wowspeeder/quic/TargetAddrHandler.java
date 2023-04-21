@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 public class TargetAddrHandler extends ChannelInboundHandlerAdapter {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(QuicServerProxyHandler.class);
 
-    private boolean firstMsg = true;
     private int RevMsgCount = 0;
 
     @Override

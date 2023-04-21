@@ -5,34 +5,16 @@ import cn.wowspeeder.config.ConfigLoader;
 import cn.wowspeeder.encryption.Base64Encrypt;
 import cn.wowspeeder.quic.*;
 import cn.wowspeeder.sw.SWCommon;
-import cn.wowspeeder.sw.SWServerCheckerReceive;
-import cn.wowspeeder.sw.SWServerCheckerSend;
-import cn.wowspeeder.sw.SWServerTcpProxyHandler;
-import cn.wowspeeder.websocket.WebSocketServerInitializer;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LineBasedFrameDecoder;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
-import io.netty.handler.timeout.IdleState;
-import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.incubator.codec.quic.*;
-import io.netty.util.CharsetUtil;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.security.cert.CertificateException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +24,6 @@ public class QuicServer {
 
     private static EventLoopGroup bossGroup = new NioEventLoopGroup();
     private static final EventLoopGroup workerGroup2 = new NioEventLoopGroup();
-    private static final EventExecutorGroup eventGroup = new DefaultEventExecutorGroup(24);
 
     private static QuicServer QuicServer = new QuicServer();
 
