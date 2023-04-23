@@ -13,5 +13,5 @@ public class SWCommon {
     public static final AttributeKey<Socks5CommandRequest> REMOTE_DES_SOCKS5 = AttributeKey.valueOf("socks5remotedes");
     public static final AttributeKey<String>  PASSWORD = AttributeKey.valueOf("password");
 
-    public static final int TCP_PROXY_IDEL_TIME = 15;
+    public static final int TCP_PROXY_IDEL_TIME = 60;
 }

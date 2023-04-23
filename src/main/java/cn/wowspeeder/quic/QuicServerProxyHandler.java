@@ -62,7 +62,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                 @Override
                                 protected void initChannel(Channel ch) throws Exception {
                                     ch.pipeline()
-                                            .addLast("timeout", new IdleStateHandler(0, 0, QuicCommon.QUIC_PROXY_IDEL_TIME, TimeUnit.SECONDS) {
+                                            .addLast("timeout", new IdleStateHandler(0, 0, SWCommon.TCP_PROXY_IDEL_TIME, TimeUnit.SECONDS) {
                                                 @Override
                                                 protected IdleStateEvent newIdleStateEvent(IdleState state, boolean first) {
                                                     logger.debug("{} state:{}", clientRecipient.toString(), state.toString());
