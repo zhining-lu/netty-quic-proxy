@@ -149,9 +149,9 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
         ChannelHandler codec = new QuicClientCodecBuilder()
                 .sslEngineProvider(q -> SslContext.newEngine(q.alloc(), ssServer.getHostString(), ssServer.getPort()))
                 .maxIdleTimeout(QuicCommon.QUIC_PROXY_IDEL_TIME, TimeUnit.SECONDS)
-                .initialMaxData(1024 * 1024 * 20) //20M
-                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 2) //2M
-                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 2) //2M
+                .initialMaxData(1024 * 1024 * 10) //10M
+                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 1) //1M
+                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 1) //1M
 //                .maxAckDelay(10, TimeUnit.MILLISECONDS)
                 .build();
         logger.info("Codec bulid time: {}", (System.currentTimeMillis() - startTime0));
@@ -161,7 +161,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                 .channel(NioDatagramChannel.class)
                 .option(ChannelOption.SO_RCVBUF, 10 * 1024 * 1024)// 接收缓冲区为10M
                 .option(ChannelOption.SO_SNDBUF, 10 * 1024 * 1024)// 发送缓冲区为10M
-                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
+                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1/2 * 1024 * 1024, 1 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                 .handler(codec)
                 .bind(0).sync().channel();
 
@@ -176,7 +176,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     }
                 })
 //                .option(QuicChannelOption.QLOG, new QLogConfiguration("./logs/", "QlogTitle", "QlogDesc"))
-                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
+                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1/2 * 1024 * 1024, 1 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                 .remoteAddress(new InetSocketAddress(ssServer.getHostString(), ssServer.getPort()));
 
         QuicChannel quicChannel = quicChannelBootstrap.connect().get();

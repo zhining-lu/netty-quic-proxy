@@ -52,12 +52,12 @@ public class QuicServer {
         ChannelHandler codec = new QuicServerCodecBuilder().sslContext(sslContext)
                 .maxIdleTimeout(SWCommon.TCP_PROXY_IDEL_TIME, TimeUnit.SECONDS)
                 // Configure some limits for the maximal number of streams (and the data) that we want to handle.
-                .initialMaxData(1024 * 1024 * 20) //20M
-                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 2)  //2M
-                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 2) //2M
+                .initialMaxData(1024 * 1024 * 10) //10M
+                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 1)  //1M
+                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 1) //1M
                 .initialMaxStreamsBidirectional(2000 * 1000)
                 .initialMaxStreamsUnidirectional(2000 * 1000)
-                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
+                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1/2 * 1024 * 1024, 1 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
 //                .maxAckDelay(10,TimeUnit.MILLISECONDS)
 //                .option(QuicChannelOption.QLOG, new QLogConfiguration("./logs/", "QlogTitle", "QlogDesc"))
                 // Setup a token handler. In a production system you would want to implement and provide your custom
@@ -110,7 +110,7 @@ public class QuicServer {
                     .channel(NioDatagramChannel.class)
                     .option(ChannelOption.SO_RCVBUF, 10 * 1024 * 1024)// 接收缓冲区为10M
                     .option(ChannelOption.SO_SNDBUF, 10 * 1024 * 1024)// 发送缓冲区为10M
-                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
+                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1/2 * 1024 * 1024, 1 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                     .handler(codec)
                     .bind(server, port).sync().channel();
             logger.info("listen at {}:{}", server, port);
