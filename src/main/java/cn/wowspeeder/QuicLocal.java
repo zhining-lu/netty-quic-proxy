@@ -68,12 +68,12 @@ public class QuicLocal {
 
         //local socks5  server ,tcp
         tcpBootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
-                .option(ChannelOption.SO_RCVBUF, 1 * 1024 * 1024)// 接收缓冲区为1M
-                .childOption(ChannelOption.SO_RCVBUF, 1 * 1024 * 1024)// 接收缓冲区为1M
-                .childOption(ChannelOption.SO_SNDBUF, 1 * 1024 * 1024)// 发送缓冲区为1M
+                .option(ChannelOption.SO_RCVBUF, 2 * 1024 * 1024)// 接收缓冲区为2M
+                .childOption(ChannelOption.SO_RCVBUF, 2 * 1024 * 1024)// 接收缓冲区为2M
+                .childOption(ChannelOption.SO_SNDBUF, 2 * 1024 * 1024)// 发送缓冲区为2M
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childOption(ChannelOption.TCP_NODELAY, false)
-                .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1/2 * 1024 * 1024, 1 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
+                .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
 
                     @Override
