@@ -104,7 +104,8 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                 @Override
                                                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                                                     super.channelInactive(ctx);
-                                                    proxyChannelClose();
+                                                    //Do not call proxyChannelClose here because there may be data in the buffer being transmitted to the client
+//                                                    proxyChannelClose();
                                                 }
 
                                                 @Override

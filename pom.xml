@@ -4,7 +4,7 @@
 
 	<groupId>org.netty-quic-proxy</groupId>
 	<artifactId>netty-quic-proxy</artifactId>
-	<version>1.3.6</version>
+	<version>1.3.7</version>
 	<packaging>jar</packaging>
 
 	<name>netty-quic-proxy</name>
@@ -93,12 +93,12 @@
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-all</artifactId>
-			<version>4.1.90.Final</version>
+			<version>4.1.92.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>io.netty.incubator</groupId>
 			<artifactId>netty-incubator-codec-native-quic</artifactId>
-			<version>0.0.39.Final</version>
+			<version>0.0.40.Final</version>
             <classifier>${project.build.classifier}</classifier>
 		</dependency>
 		<dependency>
