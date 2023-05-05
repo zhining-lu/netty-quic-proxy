@@ -53,8 +53,8 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
             proxyClient.group(workerGroup).channel(NioSocketChannel.class)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60 * 1000)
                     .option(ChannelOption.SO_KEEPALIVE, true)
-                    .option(ChannelOption.SO_RCVBUF, 2 * 1024 * 1024)// 读缓冲区为2M
-                    .option(ChannelOption.SO_SNDBUF, 2 * 1024 * 1024)// 发送缓冲区为2M
+//                    .option(ChannelOption.SO_RCVBUF, 10 * 1024 * 1024)// 读缓冲区为10M
+//                    .option(ChannelOption.SO_SNDBUF, 10 * 1024 * 1024)// 发送缓冲区10M
                     .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                     .option(ChannelOption.TCP_NODELAY, false)
                     .handler(

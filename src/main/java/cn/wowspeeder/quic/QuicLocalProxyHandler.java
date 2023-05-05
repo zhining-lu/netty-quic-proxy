@@ -150,8 +150,8 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                 .sslEngineProvider(q -> SslContext.newEngine(q.alloc(), ssServer.getHostString(), ssServer.getPort()))
                 .maxIdleTimeout(QuicCommon.QUIC_PROXY_IDEL_TIME, TimeUnit.SECONDS)
                 .initialMaxData(1024 * 1024 * 20) //20M
-                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 2) //2M
-                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 2) //2M
+                .initialMaxStreamDataBidirectionalLocal(1024 * 1024 * 20) //20M
+                .initialMaxStreamDataBidirectionalRemote(1024 * 1024 * 20) //20M
 //                .maxAckDelay(10, TimeUnit.MILLISECONDS)
                 .build();
         logger.info("Codec bulid time: {}", (System.currentTimeMillis() - startTime0));
@@ -159,8 +159,8 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
 
         Channel channel = proxyClient.group(workerGroup)
                 .channel(NioDatagramChannel.class)
-                .option(ChannelOption.SO_RCVBUF, 10 * 1024 * 1024)// 接收缓冲区为10M
-                .option(ChannelOption.SO_SNDBUF, 10 * 1024 * 1024)// 发送缓冲区为10M
+                .option(ChannelOption.SO_RCVBUF, 20 * 1024 * 1024)// 接收缓冲区为20M
+                .option(ChannelOption.SO_SNDBUF, 20 * 1024 * 1024)// 发送缓冲区为20M
                 .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                 .handler(codec)
                 .bind(0).sync().channel();
