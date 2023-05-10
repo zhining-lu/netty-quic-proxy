@@ -83,7 +83,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                 //rate control
                                                 @Override
                                                 public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-                                                    if(!quicStreamChannel.isWritable()){
+                                                    if(quicStreamChannel != null && !quicStreamChannel.isWritable()){
                                                         ctx.channel().config().setAutoRead(false);
                                                     }
                                                 }
