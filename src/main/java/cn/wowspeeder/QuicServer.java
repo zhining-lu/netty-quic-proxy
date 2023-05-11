@@ -7,6 +7,10 @@ import cn.wowspeeder.quic.*;
 import cn.wowspeeder.sw.SWCommon;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
+import io.netty.channel.epoll.EpollDatagramChannel;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.codec.LineBasedFrameDecoder;
@@ -22,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 public class QuicServer {
     private static InternalLogger logger = InternalLoggerFactory.getInstance(QuicServer.class);
 
-    private static EventLoopGroup bossGroup = new NioEventLoopGroup();
+    private static EventLoopGroup bossGroup = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
     private static final EventLoopGroup workerGroup2 = new NioEventLoopGroup();
 
     private static QuicServer QuicServer = new QuicServer();
@@ -49,7 +53,7 @@ public class QuicServer {
         // Configure SSL.
         QuicSslContext sslContext = getSslContext();
 
-        ChannelHandler codec = new QuicServerCodecBuilder().sslContext(sslContext)
+        QuicServerCodecBuilder builder = new QuicServerCodecBuilder().sslContext(sslContext)
                 .maxIdleTimeout(SWCommon.TCP_PROXY_IDEL_TIME, TimeUnit.SECONDS)
                 // Configure some limits for the maximal number of streams (and the data) that we want to handle.
                 .initialMaxData(1024 * 1024 * 20) //20M
@@ -80,7 +84,7 @@ public class QuicServer {
                         QuicChannel quicChannel = (QuicChannel) ctx.channel();
                         quicChannel.collectStats().addListener(f -> {
                             if (f.isSuccess()) {
-                                logger.info("QuicChannel id: {}, closed: {}",quicChannel.id(), f.getNow());
+                                logger.info("QuicChannel id: {}, closed: {}", quicChannel.id(), f.getNow());
                             }
                         });
                     }
@@ -102,21 +106,42 @@ public class QuicServer {
                                 .addLast(new TargetAddrHandler())
                                 .addLast(new QuicServerProxyHandler(workerGroup2));
                     }
-                }).build();
+                });
+        if (bossGroup instanceof EpollEventLoopGroup) {
+            builder.option(QuicChannelOption.SEGMENTED_DATAGRAM_PACKET_ALLOCATOR,
+                    EpollQuicUtils.newSegmentedAllocator(20));
+        }
 
-        try {
-            Bootstrap bs = new Bootstrap();
-            Channel channel = bs.group(bossGroup)
-                    .channel(NioDatagramChannel.class)
-                    .option(ChannelOption.SO_RCVBUF, 20 * 1024 * 1024)// 接收缓冲区为20M
-                    .option(ChannelOption.SO_SNDBUF, 20 * 1024 * 1024)// 发送缓冲区为20M
-                    .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
-                    .handler(codec)
-                    .bind(server, port).sync().channel();
-            logger.info("listen at {}:{}", server, port);
-            channel.closeFuture().sync();
-        } finally {
-            stop();
+        Bootstrap bs = new Bootstrap();
+        bs.group(bossGroup)
+                .channel(Epoll.isAvailable() ? EpollDatagramChannel.class : NioDatagramChannel.class)
+                .option(ChannelOption.SO_RCVBUF, 20 * 1024 * 1024)// 接收缓冲区为20M
+                .option(ChannelOption.SO_SNDBUF, 20 * 1024 * 1024)// 发送缓冲区为20M
+                .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024)); // set WRITE_BUFFER_WATER_MARK
+
+        // Support SO_REUSEPORT feature under linux platform to improve performance
+        if (Epoll.isAvailable()) {
+            bs.option(EpollChannelOption.SO_REUSEPORT, true);
+            // Use the SO_REUSEPORT feature under the linux system to make multiple threads bind to the same port
+            int cpuNum = Runtime.getRuntime().availableProcessors();
+            logger.info("using epoll reuseport and cpu: " + cpuNum);
+            for (int i = 0; i < cpuNum * 2; i++) {
+                ChannelHandler codec = builder.build();
+                bs.handler(codec);
+                ChannelFuture future = bs.bind(server, port).await();
+                if (future.isSuccess()) {
+                    logger.info("listen at {}:{}", server, port);
+                } else {
+                    throw new Exception("bootstrap bind fail port is " + port, future.cause());
+                }
+            }
+        } else {
+            ChannelFuture future = bs.bind(server, port).await();
+            if (future.isSuccess()) {
+                logger.info("listen at {}:{}", server, port);
+            } else {
+                throw new Exception("bootstrap bind fail port is " + port, future.cause());
+            }
         }
 
     }
