@@ -136,6 +136,8 @@ public class QuicServer {
                 }
             }
         } else {
+            ChannelHandler codec = builder.build();
+            bs.handler(codec);
             ChannelFuture future = bs.bind(server, port).await();
             if (future.isSuccess()) {
                 logger.info("listen at {}:{}", server, port);
