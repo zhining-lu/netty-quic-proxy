@@ -29,6 +29,8 @@ public class QuicServer {
     private static EventLoopGroup bossGroup = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
     private static final EventLoopGroup workerGroup2 = new NioEventLoopGroup();
 
+    private static final int DATAGRAM_SIZE = 2048;
+
     private static QuicServer QuicServer = new QuicServer();
 
     public static QuicServer getInstance() {
@@ -121,7 +123,10 @@ public class QuicServer {
 
         // Support SO_REUSEPORT feature under linux platform to improve performance
         if (Epoll.isAvailable()) {
-            bs.option(EpollChannelOption.SO_REUSEPORT, true);
+            // Use recvmmsg when possible
+            bs.option(EpollChannelOption.MAX_DATAGRAM_PAYLOAD_SIZE, DATAGRAM_SIZE)
+                    .option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(DATAGRAM_SIZE * 8))
+                    .option(EpollChannelOption.SO_REUSEPORT, true);
             // Use the SO_REUSEPORT feature under the linux system to make multiple threads bind to the same port
             int cpuNum = Runtime.getRuntime().availableProcessors();
             logger.info("using epoll reuseport and cpu: " + cpuNum);
