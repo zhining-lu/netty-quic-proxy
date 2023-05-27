@@ -98,7 +98,7 @@
 		<dependency>
 			<groupId>io.netty.incubator</groupId>
 			<artifactId>netty-incubator-codec-native-quic</artifactId>
-			<version>0.0.40.Final</version>
+			<version>0.0.43.Final</version>
             <classifier>${project.build.classifier}</classifier>
 		</dependency>
 		<dependency>
