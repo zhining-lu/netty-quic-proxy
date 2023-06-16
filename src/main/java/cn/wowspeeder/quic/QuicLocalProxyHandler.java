@@ -192,7 +192,9 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     @Override
                     public void channelRead(ChannelHandlerContext ctx, Object msg) {
 //                        clientChannel.writeAndFlush(((ByteBuf) msg).retain());
-                        clientChannel.writeAndFlush(msg);
+                        if(clientChannel != null){
+                            clientChannel.writeAndFlush(msg);
+                        }
                     }
 
                     @Override
@@ -212,8 +214,10 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     //rate control
                     @Override
                     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-                        if(!clientChannel.isWritable()){
-                            ctx.channel().config().setAutoRead(false);
+                        if(clientChannel != null){
+                            if(!clientChannel.isWritable()){
+                                ctx.channel().config().setAutoRead(false);
+                            }
                         }
                     }
 
