@@ -3,6 +3,7 @@ package cn.wowspeeder.quic;
 import cn.wowspeeder.sw.SWCommon;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.socket.ChannelInputShutdownReadComplete;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -57,6 +58,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
 //                    .option(ChannelOption.SO_SNDBUF, 10 * 1024 * 1024)// 发送缓冲区10M
                     .option(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                     .option(ChannelOption.TCP_NODELAY, false)
+                    .option(ChannelOption.SO_LINGER, 10)
                     .handler(
                             new ChannelInitializer<Channel>() {
                                 @Override
@@ -104,8 +106,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                 @Override
                                                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                                                     super.channelInactive(ctx);
-                                                    //Do not call proxyChannelClose here because there may be data in the buffer being transmitted to the client
-//                                                    proxyChannelClose();
+                                                    proxyChannelClose();
                                                 }
 
                                                 @Override
@@ -225,12 +226,11 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                     clientBuffs = null;
                 }
                 if (remoteChannel != null) {
-                    remoteChannel.close();
+                    remoteChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
                     remoteChannel = null;
                 }
                 if (quicStreamChannel != null) {
-                    quicStreamChannel.shutdownOutput();
-                    quicStreamChannel.close();
+                    quicStreamChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(QuicStreamChannel.SHUTDOWN_OUTPUT);
                     quicStreamChannel = null;
                 }
             }

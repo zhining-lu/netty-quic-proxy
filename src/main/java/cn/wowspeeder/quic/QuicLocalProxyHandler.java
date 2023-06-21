@@ -295,8 +295,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     clientBuffs = null;
                 }
                 if (remoteStreamChannel != null) {
-                    remoteStreamChannel.shutdownOutput();
-                    remoteStreamChannel.close();
+                    remoteStreamChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(QuicStreamChannel.SHUTDOWN_OUTPUT);
                     remoteStreamChannel = null;
                 }
                 /*if(quicChannel != null){
@@ -312,7 +311,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                 workerGroup.shutdownGracefully();
             }*/
                 if (clientChannel != null) {
-                    clientChannel.close();
+                    clientChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
                     clientChannel = null;
                 }
                 logger.debug("close channel");

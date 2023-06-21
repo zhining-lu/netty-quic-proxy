@@ -73,6 +73,7 @@ public class QuicLocal {
 //                .childOption(ChannelOption.SO_SNDBUF, 10 * 1024 * 1024)// 发送缓冲区为10M
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childOption(ChannelOption.TCP_NODELAY, false)
+                .childOption(ChannelOption.SO_LINGER, 10)
                 .childOption(ChannelOption.WRITE_BUFFER_WATER_MARK, new WriteBufferWaterMark(1024 * 1024, 2 * 1024 * 1024))// set WRITE_BUFFER_WATER_MARK
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
 
