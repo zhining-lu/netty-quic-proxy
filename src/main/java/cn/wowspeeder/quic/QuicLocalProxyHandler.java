@@ -118,30 +118,30 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-        proxyChannelClose();
+        proxyChannelForceClose();
     }
     //rate control
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
-        if(remoteStreamChannel != null){
-            if(!remoteStreamChannel.isWritable()){
-                ctx.channel().config().setAutoRead(false);
-            }
-        }
+//        if(remoteStreamChannel != null){
+//            if(!remoteStreamChannel.isWritable()){
+//                ctx.channel().config().setAutoRead(false);
+//            }
+//        }
     }
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) {
-        if(ctx.channel().isWritable()){
-            remoteStreamChannel.config().setAutoRead(true);
-        }
+//        if(ctx.channel().isWritable()){
+//            remoteStreamChannel.config().setAutoRead(true);
+//        }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.error(cause);
         cause.printStackTrace();
-        proxyChannelClose();
+        proxyChannelForceClose();
     }
 
     private QuicChannel createQuicChannel() throws InterruptedException, ExecutionException {
@@ -209,30 +209,30 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     @Override
                     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                         super.channelInactive(ctx);
-                        proxyChannelClose();
+                        proxyChannelForceClose();
                     }
                     //rate control
                     @Override
                     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-                        if(clientChannel != null){
-                            if(!clientChannel.isWritable()){
-                                ctx.channel().config().setAutoRead(false);
-                            }
-                        }
+//                        if(clientChannel != null){
+//                            if(!clientChannel.isWritable()){
+//                                ctx.channel().config().setAutoRead(false);
+//                            }
+//                        }
                     }
 
                     @Override
                     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-                        if(ctx.channel().isWritable()){
-                            clientChannel.config().setAutoRead(true);
-                        }
+//                        if(ctx.channel().isWritable()){
+//                            clientChannel.config().setAutoRead(true);
+//                        }
                     }
 
                     @Override
                     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
                         logger.error(cause);
                         cause.printStackTrace();
-                        proxyChannelClose();
+                        proxyChannelForceClose();
                     }
                 });
             }
@@ -275,7 +275,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                             }
                             // After sending for a period of time, no heartbeat information will be sent,
                             // and the parent channel will be closed due to timeout
-                            if(sendMsgCount >= 5 * 60){
+                            if(sendMsgCount >= 60){
                                 ctx.channel().close();
                             }
                         }, QuicCommon.QUIC_PROXY_IDEL_TIME / 4 * 3, QuicCommon.QUIC_PROXY_IDEL_TIME / 4 * 3, TimeUnit.SECONDS);
@@ -317,6 +317,28 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
             }*/
                 if (clientChannel != null) {
                     clientChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+                    clientChannel = null;
+                }
+                logger.debug("close channel");
+            }
+
+        } catch (Exception e) {
+            logger.error("close channel error", e);
+        }
+    }
+    private void proxyChannelForceClose() {
+        try {
+            synchronized (this){
+                if (clientBuffs != null) {
+                    clientBuffs.forEach(ReferenceCountUtil::release);
+                    clientBuffs = null;
+                }
+                if (remoteStreamChannel != null) {
+                    remoteStreamChannel.close();
+                    remoteStreamChannel = null;
+                }
+                if (clientChannel != null) {
+                    clientChannel.close();
                     clientChannel = null;
                 }
                 logger.debug("close channel");
