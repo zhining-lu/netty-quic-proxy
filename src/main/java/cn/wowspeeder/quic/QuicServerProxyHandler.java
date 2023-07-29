@@ -68,7 +68,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                 @Override
                                                 protected IdleStateEvent newIdleStateEvent(IdleState state, boolean first) {
                                                     logger.debug("{} state:{}", clientRecipient.toString(), state.toString());
-                                                    proxyChannelForceClose();
+                                                    proxyChannelClose();
                                                     return super.newIdleStateEvent(state, first);
                                                 }
                                             })
@@ -106,7 +106,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                                 @Override
                                                 public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                                                     super.channelInactive(ctx);
-                                                    proxyChannelForceClose();
+                                                    proxyChannelCloseOnFlush();
                                                 }
 
                                                 @Override
@@ -114,7 +114,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
 //                                                    super.exceptionCaught(ctx, cause);
                                                     logger.error(cause);
                                                     cause.printStackTrace();
-                                                    proxyChannelForceClose();
+                                                    proxyChannelClose();
                                                 }
                                             });
                                 }
@@ -146,16 +146,16 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                                     }
                                 } else {
 //                                    logger.error("channel id {}, {}<->{} connect {},cause {}, time: {}", quicStreamChannel.id().toString(), quicStreamChannel.remoteAddress().toString(), clientRecipient.toString(), future.isSuccess(), future.cause(), System.currentTimeMillis() - startTime);
-                                    proxyChannelForceClose();
+                                    proxyChannelClose();
                                 }
                             } catch (Exception e) {
                                 logger.error(e);
-                                proxyChannelForceClose();
+                                proxyChannelClose();
                             }
                         });
             } catch (Exception e) {
                 logger.error("connect internet error", e);
-                proxyChannelForceClose();
+                proxyChannelClose();
                 return;
             }
         }
@@ -183,7 +183,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-        proxyChannelForceClose();
+        proxyChannelClose();
     }
     //rate control
     @Override
@@ -207,7 +207,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) {
         if (evt == ChannelInputShutdownReadComplete.INSTANCE) {
-            proxyChannelClose();
+            proxyChannelCloseOnFlush();
         }
     }
 
@@ -215,10 +215,10 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.error(cause);
         cause.printStackTrace();
-        proxyChannelForceClose();
+        proxyChannelClose();
     }
 
-    private void proxyChannelClose() {
+    private void proxyChannelCloseOnFlush() {
         try {
             synchronized (this){
                 if (clientBuffs != null) {
@@ -243,7 +243,7 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
             logger.error("close channel error", e);
         }
     }
-    private void proxyChannelForceClose() {
+    private void proxyChannelClose() {
         try {
             synchronized (this){
                 if (clientBuffs != null) {

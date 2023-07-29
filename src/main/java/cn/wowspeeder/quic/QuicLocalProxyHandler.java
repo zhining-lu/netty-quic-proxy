@@ -118,7 +118,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-        proxyChannelForceClose();
+        proxyChannelCloseOnFlush();
     }
     //rate control
     @Override
@@ -141,7 +141,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.error(cause);
         cause.printStackTrace();
-        proxyChannelForceClose();
+        proxyChannelClose();
     }
 
     private QuicChannel createQuicChannel() throws InterruptedException, ExecutionException {
@@ -202,14 +202,14 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                         if (evt == ChannelInputShutdownReadComplete.INSTANCE) {
                             // Close the connection once the remote peer did send the FIN for this stream.
 //                            ((QuicChannel) ctx.channel().parent()).close();
-                            proxyChannelClose();
+                            proxyChannelCloseOnFlush();
                         }
                     }
 
                     @Override
                     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
                         super.channelInactive(ctx);
-                        proxyChannelForceClose();
+                        proxyChannelClose();
                     }
                     //rate control
                     @Override
@@ -232,7 +232,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
                         logger.error(cause);
                         cause.printStackTrace();
-                        proxyChannelForceClose();
+                        proxyChannelClose();
                     }
                 });
             }
@@ -275,7 +275,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                             }
                             // After sending for a period of time, no heartbeat information will be sent,
                             // and the parent channel will be closed due to timeout
-                            if(sendMsgCount >= 60){
+                            if(sendMsgCount >= 5 * 60){
                                 ctx.channel().close();
                             }
                         }, QuicCommon.QUIC_PROXY_IDEL_TIME / 4 * 3, QuicCommon.QUIC_PROXY_IDEL_TIME / 4 * 3, TimeUnit.SECONDS);
@@ -292,7 +292,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
         });
     }
 
-    private void proxyChannelClose() {
+    private void proxyChannelCloseOnFlush() {
         try {
             synchronized (this){
                 if (clientBuffs != null) {
@@ -326,7 +326,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
             logger.error("close channel error", e);
         }
     }
-    private void proxyChannelForceClose() {
+    private void proxyChannelClose() {
         try {
             synchronized (this){
                 if (clientBuffs != null) {
