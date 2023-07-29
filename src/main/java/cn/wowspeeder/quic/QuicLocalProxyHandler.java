@@ -278,7 +278,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                             if(sendMsgCount >= 5 * 60){
                                 ctx.channel().close();
                             }
-                        }, QuicCommon.QUIC_PROXY_IDEL_TIME / 4 * 3, QuicCommon.QUIC_PROXY_IDEL_TIME / 4 * 3, TimeUnit.SECONDS);
+                        }, QuicCommon.QUIC_PROXY_IDEL_TIME / 2, QuicCommon.QUIC_PROXY_IDEL_TIME / 2, TimeUnit.SECONDS);
                     }
 
                     @Override
