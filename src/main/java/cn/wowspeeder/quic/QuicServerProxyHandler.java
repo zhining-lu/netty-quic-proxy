@@ -230,7 +230,8 @@ public class QuicServerProxyHandler extends SimpleChannelInboundHandler<ByteBuf>
                     remoteChannel = null;
                 }
                 if (quicStreamChannel != null) {
-                    quicStreamChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(QuicStreamChannel.SHUTDOWN_OUTPUT);
+                    quicStreamChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(QuicStreamChannel.SHUTDOWN_OUTPUT)
+                            .addListener(ChannelFutureListener.CLOSE);
                     quicStreamChannel = null;
                 }
             }

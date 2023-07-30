@@ -89,10 +89,4 @@ public final class SocksServerHandler extends SimpleChannelInboundHandler<SocksM
         ctx.fireChannelReadComplete();
     }
 
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable throwable) {
-//        throwable.printStackTrace();
-//        SocksServerUtils.closeOnFlush(ctx.channel());
-        ctx.fireExceptionCaught(throwable);
-    }
 }
