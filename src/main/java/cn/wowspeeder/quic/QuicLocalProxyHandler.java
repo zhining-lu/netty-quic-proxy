@@ -253,10 +253,13 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     private int RevMsgCount = 0;
                     private int lostCount = 0;
 
+                    private String revMsg;
+
                     @Override
                     public void channelRead(ChannelHandlerContext ctx, Object msg) {
                         ByteBuf byteBuf = (ByteBuf) msg;
-                        RevMsgCount ++;
+                        revMsg = byteBuf.toString(CharsetUtil.UTF_8);
+                        RevMsgCount += revMsg.split("\r\n").length;
 //                        logger.info("Received server heartbeat msg[{}]: {}, quic channel id: {}, stream channel isAutoRead: {}",RevMsgCount, byteBuf.toString(CharsetUtil.UTF_8).replaceAll("\r|\n", ""), ctx.channel().parent().id(), ctx.channel().config().isAutoRead());
                         byteBuf.release();
                     }
@@ -269,10 +272,10 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                             lostCount = sendMsgCount - RevMsgCount - 1;
 //                            logger.info("Send heartbeat msg[{}] ..., lost: {}, quic channel id: {}, isActive: {}, stream channel isActive: {}, isAutoRead: {}", sendMsgCount, lostCount, ctx.channel().parent().id(), ctx.channel().parent().isActive(), ctx.channel().isActive(), ctx.channel().config().isAutoRead());
                             ctx.channel().writeAndFlush(Unpooled.copiedBuffer("GET /\r\n", CharsetUtil.UTF_8));
-                            if(lostCount >= 1){
+                            if(lostCount >= 2){
 //                                //close the quic channel if lostCount >= 2
                                 ctx.channel().parent().close();
-                                logger.info("Close quic channel id: {}, lost: {}", ctx.channel().parent().id(), lostCount);
+                                logger.info("Close quic channel id: {}, lost: {}, revMsg: {}", ctx.channel().parent().id(), lostCount, revMsg);
                             }
                             // After sending for a period of time, no heartbeat information will be sent,
                             // and the parent channel will be closed due to timeout
@@ -321,7 +324,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     clientChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
                     clientChannel = null;
                 }
-                logger.debug("close channel");
+                logger.info("close channel OnFlush");
             }
 
         } catch (Exception e) {
@@ -343,7 +346,7 @@ public class QuicLocalProxyHandler extends SimpleChannelInboundHandler<ByteBuf> 
                     clientChannel.close();
                     clientChannel = null;
                 }
-                logger.debug("close channel");
+                logger.info("close channel");
             }
 
         } catch (Exception e) {
